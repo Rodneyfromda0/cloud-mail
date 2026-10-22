@@ -1,156 +1,176 @@
 <template>
-  <div id="login-box" :style=" background ? 'background: var(--el-bg-color)' : ''" v-loading="oauthLoading" element-loading-text="登录中...">
-    <div id="background-wrap" v-if="!settingStore.settings.background">
-      <div class="x1 cloud"></div>
-      <div class="x2 cloud"></div>
-      <div class="x3 cloud"></div>
-      <div class="x4 cloud"></div>
-      <div class="x5 cloud"></div>
+  <div id="login-box" class="login-surface" v-loading="oauthLoading" element-loading-text="登录中...">
+    <div v-if="settingStore.settings.background" class="login-background-image" :style="background"></div>
+    <div class="login-top-actions">
+      <span class="login-language">{{ settingStore.lang === 'zh' ? '中文' : 'English' }}</span>
     </div>
-    <div v-else class="login-background-image" :style="background"></div>
-    <div class="form-wrapper">
-      <div class="container">
+    <main class="login-layout">
+      <section class="login-story">
         <div class="login-brand">
-          <img :src="xpassLogo" alt="" />
+          <img :src="xpassLogo" alt="XPass" />
           <span>XPass <em>Mail</em></span>
         </div>
-        <span class="form-title">{{ settingStore.settings.title }}</span>
-        <span class="form-desc" v-if="show === 'login'">{{ $t('loginTitle') }}</span>
-        <span class="form-desc" v-else>{{ $t('regTitle') }}</span>
-        <div v-show="show === 'login'">
-          <el-input :class="!hideLoginDomain ? 'email-input' : ''" v-model="form.email"
-                    type="text" :placeholder="$t('emailAccount')" autocomplete="off" @keyup.enter="submit">
-            <template #append v-if="!hideLoginDomain">
-              <div @click.stop="openSelect">
-                <el-select
-                    v-if="show === 'login'"
-                    ref="mySelect"
-                    v-model="suffix"
-                    :placeholder="$t('select')"
-                    class="select"
-                >
-                  <el-option
-                      v-for="item in domainList"
-                      :key="item"
-                      :label="item"
-                      :value="item"
-                  />
-                </el-select>
-                <div style="color: var(--el-text-color-primary)">
-                  <span>{{ suffix }}</span>
-                  <Icon class="setting-icon" icon="mingcute:down-small-fill" width="20" height="20"/>
-                </div>
-              </div>
-            </template>
-          </el-input>
-          <el-input v-model="form.password" :placeholder="$t('password')" type="password" autocomplete="off" @keyup.enter="submit">
-          </el-input>
-          <el-button class="btn" type="primary" @click="submit" :loading="loginLoading"
-          >{{ $t('loginBtn') }}
-          </el-button>
-          <el-button v-for="p in oauthProviders" :key="p.key" class="btn" style="margin-top: 10px" @click="oauthLogin(p.key)">
-            <el-avatar v-if="p.iconType === 'image'" :src="p.icon" :size="18" style="margin-right: 10px" />
-            <Icon v-else :icon="p.icon" width="18" height="18" style="margin-right: 10px" />
-            {{ p.label }}
-          </el-button>
+        <div class="login-story-copy">
+          <p class="login-eyebrow">XPass Mail</p>
+          <h1>The Event Ends.<br /><span>The Relationship Shouldn't.</span></h1>
+          <p class="login-story-description">
+            Engineering The Future Of Event Ticketing. Powering The Future Of Live Experiences.
+          </p>
         </div>
-        <div v-show="show !== 'login'">
-          <el-input :class="!hideLoginDomain ? 'email-input' : ''" v-model="registerForm.email" type="text" :placeholder="$t('emailAccount')"
-                    autocomplete="off" @keyup.enter="submitRegister">
-            <template #append v-if="!hideLoginDomain">
-              <div @click.stop="openSelect">
-                <el-select
-                    v-if="show !== 'login'"
-                    ref="mySelect"
-                    v-model="suffix"
-                    :placeholder="$t('select')"
-                    class="select"
-                >
-                  <el-option
-                      v-for="item in domainList"
-                      :key="item"
-                      :label="item"
-                      :value="item"
-                  />
-                </el-select>
-                <div>
-                  <span>{{ suffix }}</span>
-                  <Icon class="setting-icon" icon="mingcute:down-small-fill" width="20" height="20"/>
-                </div>
-              </div>
-            </template>
-          </el-input>
-          <el-input v-model="registerForm.password" :placeholder="$t('password')" type="password" autocomplete="off" @keyup.enter="submitRegister"/>
-          <el-input v-model="registerForm.confirmPassword" :placeholder="$t('confirmPwd')" type="password"
-                    autocomplete="off" @keyup.enter="submitRegister"/>
-          <el-input v-if="settingStore.settings.regKey === 0" v-model="registerForm.code" :placeholder="$t('regKey')"
-                    type="text" autocomplete="off" @keyup.enter="submitRegister"/>
-          <el-input v-if="settingStore.settings.regKey === 2" v-model="registerForm.code"
-                    :placeholder="$t('regKeyOptional')" type="text" autocomplete="off" @keyup.enter="submitRegister"/>
-          <div v-show="verifyShow"
-               class="register-turnstile"
-               :data-sitekey="settingStore.settings.siteKey"
-               data-callback="onTurnstileSuccess"
-               data-error-callback="onTurnstileError"
-               data-after-interactive-callback="loadAfter"
-               data-before-interactive-callback="loadBefore"
-          >
-            <span style="font-size: 12px;color: #F56C6C" v-if="botJsError">{{ $t('verifyModuleFailed') }}</span>
-          </div>
-          <el-button class="btn" style="margin: 0" type="primary" @click="submitRegister" :loading="registerLoading"
-          >{{ $t('regBtn') }}
-          </el-button>
-          <el-button v-for="p in oauthProviders" :key="p.key" class="btn" style="margin-top: 10px" @click="oauthLogin(p.key)">
-            <el-avatar v-if="p.iconType === 'image'" :src="p.icon" :size="18" style="margin-right: 10px" />
-            <Icon v-else :icon="p.icon" width="18" height="18" style="margin-right: 10px" />
-            {{ p.label }}
-          </el-button>
+        <div class="login-story-foot" aria-hidden="true"></div>
+      </section>
+
+      <section class="login-panel">
+        <div class="login-brand login-brand-mobile">
+          <img :src="xpassLogo" alt="XPass" />
+          <span>XPass <em>Mail</em></span>
         </div>
-        <template v-if="settingStore.settings.register === 0">
-          <div class="switch" @click="show = 'register'" v-if="show === 'login'">{{ $t('noAccount') }}
-            <span>{{ $t('regSwitch') }}</span></div>
-          <div class="switch" @click="show = 'login'" v-else>{{ $t('hasAccount') }} <span>{{ $t('loginSwitch') }}</span>
-          </div>
-        </template>
-      </div>
-    </div>
-    <el-dialog class="bind-dialog" v-model="showBindForm"  title="注册邮箱" >
-      <div class="bind-container">
-        <el-input :class="!hideLoginDomain ? 'email-input' : ''" v-model="bindForm.email" type="text" :placeholder="$t('emailAccount')" autocomplete="off" @keyup.enter="bind">
-          <template #append v-if="!hideLoginDomain">
-            <div @click.stop="openSelect">
-              <el-select
-                  ref="mySelect"
-                  v-model="suffix"
-                  :placeholder="$t('select')"
-                  class="select"
+        <div class="login-card">
+          <h2>{{ show === 'login' ? 'Sign In' : $t('regTitle') }}</h2>
+          <p class="login-card-description">
+            {{ show === 'login' ? 'Sign in with your @getxpass.net credentials to continue.' : $t('loginTitle') }}
+          </p>
+
+          <form v-show="show === 'login'" class="auth-form" @submit.prevent="submit">
+            <div class="auth-field">
+              <label for="login-username">{{ hideLoginDomain ? $t('emailAccount') : 'Username' }}</label>
+              <el-input
+                id="login-username"
+                v-model="form.email"
+                type="text"
+                :placeholder="hideLoginDomain ? 'name@company.com' : 'your.name'"
+                autocomplete="username"
+                autocapitalize="none"
+                spellcheck="false"
+                @keyup.enter="submit"
               >
-                <el-option
-                    v-for="item in domainList"
-                    :key="item"
-                    :label="item"
-                    :value="item"
-                />
+                <template v-if="!hideLoginDomain" #append>
+                  <div class="domain-picker" @click.stop="openSelect">
+                    <el-select ref="mySelect" v-model="suffix" :placeholder="$t('select')" class="select">
+                      <el-option v-for="item in domainList" :key="item" :label="item" :value="item" />
+                    </el-select>
+                    <span>{{ suffix }}</span>
+                    <Icon icon="mingcute:down-small-fill" width="16" height="16" />
+                  </div>
+                </template>
+              </el-input>
+            </div>
+            <div class="auth-field">
+              <label for="login-password">{{ $t('password') }}</label>
+              <el-input
+                id="login-password"
+                v-model="form.password"
+                type="password"
+                show-password
+                :placeholder="$t('password')"
+                autocomplete="current-password"
+                @keyup.enter="submit"
+              />
+            </div>
+            <el-button class="auth-submit" type="primary" native-type="submit" :loading="loginLoading">
+              {{ loginLoading ? 'Signing in…' : 'Sign in' }}
+            </el-button>
+            <div v-if="oauthProviders.length" class="oauth-list">
+              <el-button v-for="p in oauthProviders" :key="p.key" class="oauth-button" @click="oauthLogin(p.key)">
+                <el-avatar v-if="p.iconType === 'image'" :src="p.icon" :size="18" />
+                <Icon v-else :icon="p.icon" width="18" height="18" />
+                {{ p.label }}
+              </el-button>
+            </div>
+          </form>
+
+          <form v-show="show !== 'login'" class="auth-form" @submit.prevent="submitRegister">
+            <div class="auth-field">
+              <label for="register-username">{{ hideLoginDomain ? $t('emailAccount') : 'Username' }}</label>
+              <el-input
+                id="register-username"
+                v-model="registerForm.email"
+                type="text"
+                :placeholder="hideLoginDomain ? 'name@company.com' : 'your.name'"
+                autocomplete="username"
+                autocapitalize="none"
+                spellcheck="false"
+                @keyup.enter="submitRegister"
+              >
+                <template v-if="!hideLoginDomain" #append>
+                  <div class="domain-picker" @click.stop="openSelect">
+                    <el-select ref="mySelect" v-model="suffix" :placeholder="$t('select')" class="select">
+                      <el-option v-for="item in domainList" :key="item" :label="item" :value="item" />
+                    </el-select>
+                    <span>{{ suffix }}</span>
+                    <Icon icon="mingcute:down-small-fill" width="16" height="16" />
+                  </div>
+                </template>
+              </el-input>
+            </div>
+            <div class="auth-field">
+              <label for="register-password">{{ $t('password') }}</label>
+              <el-input id="register-password" v-model="registerForm.password" type="password" show-password autocomplete="new-password" @keyup.enter="submitRegister" />
+            </div>
+            <div class="auth-field">
+              <label for="register-confirm-password">{{ $t('confirmPwd') }}</label>
+              <el-input id="register-confirm-password" v-model="registerForm.confirmPassword" type="password" show-password autocomplete="new-password" @keyup.enter="submitRegister" />
+            </div>
+            <div v-if="settingStore.settings.regKey === 0 || settingStore.settings.regKey === 2" class="auth-field">
+              <label for="register-key">{{ settingStore.settings.regKey === 0 ? $t('regKey') : $t('regKeyOptional') }}</label>
+              <el-input id="register-key" v-model="registerForm.code" autocomplete="off" @keyup.enter="submitRegister" />
+            </div>
+            <div
+              v-show="verifyShow"
+              class="register-turnstile"
+              :data-sitekey="settingStore.settings.siteKey"
+              data-callback="onTurnstileSuccess"
+              data-error-callback="onTurnstileError"
+              data-after-interactive-callback="loadAfter"
+              data-before-interactive-callback="loadBefore"
+            >
+              <span v-if="botJsError" class="verify-error">{{ $t('verifyModuleFailed') }}</span>
+            </div>
+            <el-button class="auth-submit" type="primary" native-type="submit" :loading="registerLoading">
+              {{ registerLoading ? 'Creating account…' : $t('regBtn') }}
+            </el-button>
+            <div v-if="oauthProviders.length" class="oauth-list">
+              <el-button v-for="p in oauthProviders" :key="p.key" class="oauth-button" @click="oauthLogin(p.key)">
+                <el-avatar v-if="p.iconType === 'image'" :src="p.icon" :size="18" />
+                <Icon v-else :icon="p.icon" width="18" height="18" />
+                {{ p.label }}
+              </el-button>
+            </div>
+          </form>
+
+          <div v-if="settingStore.settings.register === 0" class="auth-switch">
+            <template v-if="show === 'login'">
+              {{ $t('noAccount') }}
+              <button type="button" @click="show = 'register'">{{ $t('regSwitch') }}</button>
+            </template>
+            <template v-else>
+              {{ $t('hasAccount') }}
+              <button type="button" @click="show = 'login'">{{ $t('loginSwitch') }}</button>
+            </template>
+          </div>
+        </div>
+      </section>
+    </main>
+    <footer class="login-footer">© 2027 GetXPass Limited</footer>
+
+    <el-dialog class="bind-dialog" v-model="showBindForm" title="注册邮箱">
+      <div class="bind-container">
+        <el-input v-model="bindForm.email" type="text" :placeholder="$t('emailAccount')" autocomplete="off" @keyup.enter="bind">
+          <template v-if="!hideLoginDomain" #append>
+            <div class="domain-picker" @click.stop="openSelect">
+              <el-select ref="mySelect" v-model="suffix" :placeholder="$t('select')" class="select">
+                <el-option v-for="item in domainList" :key="item" :label="item" :value="item" />
               </el-select>
-              <div>
-                <span>{{ suffix }}</span>
-                <Icon class="setting-icon" icon="mingcute:down-small-fill" width="20" height="20"/>
-              </div>
+              <span>{{ suffix }}</span>
+              <Icon icon="mingcute:down-small-fill" width="16" height="16" />
             </div>
           </template>
         </el-input>
-        <el-input v-if="settingStore.settings.regKey === 0" v-model="bindForm.code" :placeholder="$t('regKey')"
-                  type="text" autocomplete="off" @keyup.enter="bind"/>
-        <el-input v-if="settingStore.settings.regKey === 2" v-model="bindForm.code"
-                  :placeholder="$t('regKeyOptional')" type="text" autocomplete="off" @keyup.enter="bind"/>
-        <el-button class="btn" type="primary" @click="bind" :loading="bindLoading"
-        >绑定
-        </el-button>
+        <el-input v-if="settingStore.settings.regKey === 0" v-model="bindForm.code" :placeholder="$t('regKey')" type="text" autocomplete="off" @keyup.enter="bind" />
+        <el-input v-if="settingStore.settings.regKey === 2" v-model="bindForm.code" :placeholder="$t('regKeyOptional')" type="text" autocomplete="off" @keyup.enter="bind" />
+        <el-button class="auth-submit" type="primary" :loading="bindLoading" @click="bind">绑定</el-button>
       </div>
     </el-dialog>
-    <a v-show="settingStore.settings.projectLink" class="github" href="https://github.com/maillab/cloud-mail">
-      <Icon icon="mingcute:github-line" color="#1890ff" width="20" height="20" />
-    </a>
   </div>
 </template>
 
@@ -748,23 +768,6 @@ function submitRegister() {
   top: 6px;
 }
 
-.github {
-  position: fixed;
-  width: 35px;
-  height: 35px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border-radius: 50%;
-  background: var(--el-bg-color);
-  bottom: 10px;
-  right: 10px;
-  z-index: 1000;
-  border: 1px solid var(--el-border-color-light);
-  box-shadow: var(--el-box-shadow-light);
-  cursor: pointer;
-}
-
 :deep(.el-input-group__append) {
   padding: 0 !important;
   padding-left: 8px !important;
@@ -1005,15 +1008,6 @@ function submitRegister() {
   color: #ff7b3d;
 }
 
-.github {
-  border-color: #403731;
-  background: #211e1b;
-}
-
-.github :deep(svg) {
-  color: #ff7b3d !important;
-}
-
 @media (max-width: 480px) {
   .container {
     padding: 28px 22px;
@@ -1021,6 +1015,351 @@ function submitRegister() {
 
   .login-brand {
     margin-bottom: 26px;
+  }
+}
+
+#login-box {
+  position: relative;
+  inset: auto;
+  display: block;
+  width: 100%;
+  min-height: 100dvh;
+  height: auto;
+  overflow: hidden;
+  color: #f2ebe5;
+  background:
+    radial-gradient(ellipse at 18% 18%, rgba(255, 85, 0, .12), transparent 34%),
+    radial-gradient(ellipse at 82% 84%, rgba(120, 75, 47, .11), transparent 32%),
+    #181614;
+  font-family: 'DM Sans', Manrope, sans-serif;
+}
+
+.login-background-image {
+  z-index: 0;
+  background-size: cover !important;
+  background-position: center !important;
+  opacity: .14;
+}
+
+.login-top-actions {
+  position: absolute;
+  top: 24px;
+  right: max(24px, calc((100vw - 1152px) / 2));
+  z-index: 2;
+}
+
+.login-language {
+  padding: 8px 12px;
+  border: 1px solid #403731;
+  border-radius: 8px;
+  background: rgba(33, 30, 27, .85);
+  color: #b2a49a;
+  font-size: 12px;
+}
+
+.login-layout {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(400px, .92fr);
+  gap: 48px;
+  width: min(1152px, 100%);
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: 72px 32px 88px;
+}
+
+.login-story {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 10px 0;
+}
+
+.login-story-copy {
+  max-width: 520px;
+  margin: auto 0;
+  padding: 76px 0;
+}
+
+.login-eyebrow {
+  margin-bottom: 18px;
+  color: #ff7b3d;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+}
+
+.login-story-copy h1 {
+  margin: 0;
+  color: #f2ebe5;
+  font: 700 clamp(38px, 5vw, 60px)/1.06 'Space Grotesk', Manrope, sans-serif;
+  letter-spacing: -.045em;
+}
+
+.login-story-copy h1 span {
+  color: #ff5500;
+}
+
+.login-story-description {
+  max-width: 390px;
+  margin: 24px 0 0;
+  color: #b2a49a;
+  font-size: 15px;
+  line-height: 1.75;
+}
+
+.login-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 22px 0;
+}
+
+.login-brand-mobile {
+  display: none;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 430px;
+  padding: 34px;
+  border: 1px solid #403731;
+  border-radius: 14px;
+  background: rgba(33, 30, 27, .94);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, .38);
+}
+
+.login-card h2 {
+  margin: 0;
+  color: #f2ebe5;
+  font: 700 26px/1.25 Manrope, sans-serif;
+  letter-spacing: -.025em;
+}
+
+.login-card-description {
+  margin: 9px 0 0;
+  color: #b2a49a;
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.auth-form {
+  display: grid;
+  gap: 18px;
+  margin-top: 26px;
+}
+
+.auth-field {
+  display: grid;
+  gap: 8px;
+}
+
+.auth-field > label {
+  color: #e6ded7;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.auth-field :deep(.el-input__wrapper) {
+  min-height: 44px;
+  border-radius: 7px;
+  background: #181614;
+  box-shadow: 0 0 0 1px #443a33 inset;
+}
+
+.auth-field :deep(.el-input__inner) {
+  color: #f2ebe5;
+  font-size: 13px;
+}
+
+.auth-field :deep(.el-input__inner::placeholder) {
+  color: #857970;
+}
+
+.auth-field :deep(.el-input-group__append) {
+  border: 0;
+  border-left: 1px solid #403731;
+  border-radius: 0 7px 7px 0;
+  background: #302a26;
+  box-shadow: none;
+}
+
+.domain-picker {
+  position: relative;
+  display: flex;
+  min-height: 42px;
+  align-items: center;
+  gap: 6px;
+  color: #c1b4aa;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.domain-picker .select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.auth-submit {
+  width: 100%;
+  min-height: 44px;
+  margin: 2px 0 0 !important;
+  border-color: #ff5500;
+  border-radius: 7px;
+  background: #ff5500;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.auth-submit:hover,
+.auth-submit:focus {
+  border-color: #e94c00;
+  background: #e94c00;
+  color: #fff;
+}
+
+.oauth-list {
+  display: grid;
+  gap: 9px;
+}
+
+.oauth-button {
+  width: 100%;
+  min-height: 42px;
+  margin: 0 !important;
+  border: 1px solid #51453d;
+  border-radius: 7px;
+  background: #302a26;
+  color: #f2ebe5;
+  font-size: 13px;
+}
+
+.oauth-button:hover {
+  border-color: #766354;
+  background: #39312c;
+  color: #fff;
+}
+
+.oauth-button :deep(.el-avatar) {
+  margin-right: 2px;
+}
+
+.auth-switch {
+  margin-top: 22px;
+  color: #b2a49a;
+  font-size: 12px;
+  text-align: center;
+}
+
+.auth-switch button {
+  margin-left: 4px;
+  padding: 0;
+  background: none;
+  color: #ff7b3d;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.auth-switch button:hover {
+  color: #ff9b6b;
+}
+
+.login-footer {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  padding: 22px 24px;
+  color: #857970;
+  font-size: 11px;
+  text-align: center;
+}
+
+.register-turnstile {
+  margin-bottom: 0;
+}
+
+.verify-error {
+  color: #f87171;
+  font-size: 12px;
+}
+
+.bind-container {
+  display: grid;
+  gap: 14px;
+}
+
+.bind-dialog :deep(.el-dialog) {
+  border: 1px solid #403731;
+  border-radius: 12px;
+  background: #211e1b;
+}
+
+.bind-dialog :deep(.el-dialog__title),
+.bind-dialog :deep(.el-dialog__body) {
+  color: #f2ebe5;
+}
+
+@media (max-width: 900px) {
+  .login-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(360px, .9fr);
+    gap: 28px;
+    padding-right: 24px;
+    padding-left: 24px;
+  }
+
+  .login-card {
+    padding: 28px;
+  }
+}
+
+@media (max-width: 720px) {
+  #login-box {
+    overflow: auto;
+  }
+
+  .login-top-actions {
+    top: 18px;
+    right: 18px;
+  }
+
+  .login-layout {
+    display: flex;
+    min-height: 100dvh;
+    flex-direction: column;
+    justify-content: center;
+    padding: 64px 18px 72px;
+  }
+
+  .login-story {
+    display: none;
+  }
+
+  .login-panel {
+    display: block;
+    padding: 0;
+  }
+
+  .login-brand-mobile {
+    display: flex;
+    justify-content: center;
+    margin: 0 auto 24px;
+  }
+
+  .login-card {
+    max-width: 440px;
+    margin: 0 auto;
+    padding: 28px 24px;
+  }
+
+  .login-footer {
+    padding: 16px 20px;
   }
 }
 
