@@ -7,9 +7,13 @@
       <div class="x4 cloud"></div>
       <div class="x5 cloud"></div>
     </div>
-    <div v-else :style="background"></div>
+    <div v-else class="login-background-image" :style="background"></div>
     <div class="form-wrapper">
       <div class="container">
+        <div class="login-brand">
+          <img :src="xpassLogo" alt="" />
+          <span>XPass <em>Mail</em></span>
+        </div>
         <span class="form-title">{{ settingStore.settings.title }}</span>
         <span class="form-desc" v-if="show === 'login'">{{ $t('loginTitle') }}</span>
         <span class="form-desc" v-else>{{ $t('regTitle') }}</span>
@@ -168,6 +172,7 @@ import {loginUserInfo} from "@/request/my.js";
 import {permsToRouter} from "@/perm/perm.js";
 import {useI18n} from "vue-i18n";
 import {oauthBindUser, oauthLinuxDoLogin, oauthGithubLogin, oauthGoogleLogin} from "@/request/ouath.js";
+import xpassLogo from '@/mail-ui/xpass-logo.png'
 
 const {t} = useI18n();
 const accountStore = useAccountStore();
@@ -806,6 +811,12 @@ function submitRegister() {
   grid-template-columns: 1fr;
 }
 
+.login-background-image {
+  position: fixed;
+  inset: 0;
+  opacity: .16;
+  pointer-events: none;
+}
 
 #background-wrap {
   height: 100%;
@@ -878,6 +889,139 @@ function submitRegister() {
   width: 180px;
   right: 50px;
   top: -90px;
+}
+
+.login-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 32px;
+  font: 800 22px/1 var(--font-display, 'Manrope', sans-serif);
+  letter-spacing: -.7px;
+}
+
+.login-brand img {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  object-fit: contain;
+}
+
+.login-brand em {
+  color: #ff5500;
+  font-style: normal;
+}
+
+#login-box {
+  position: fixed;
+  inset: 0;
+  height: 100dvh;
+  color: #f2ebe5;
+  font-family: 'DM Sans', sans-serif;
+  background:
+    radial-gradient(ellipse at 18% 18%, rgba(255, 85, 0, .12), transparent 34%),
+    radial-gradient(ellipse at 82% 84%, rgba(120, 75, 47, .11), transparent 32%),
+    #181614;
+}
+
+#background-wrap,
+.cloud {
+  display: none;
+}
+
+.form-wrapper {
+  inset: 0;
+  width: 100%;
+  padding: 24px;
+}
+
+.container {
+  width: min(450px, 100%);
+  height: auto;
+  min-height: 0;
+  margin: 0;
+  padding: 36px;
+  border: 1px solid #403731;
+  border-radius: 18px;
+  background: rgba(33, 30, 27, .96);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, .38);
+}
+
+.container .form-title {
+  color: #f2ebe5;
+  font: 800 27px/1.2 'Manrope', sans-serif;
+  letter-spacing: -.7px;
+}
+
+.container .form-desc {
+  margin-top: 8px;
+  margin-bottom: 24px;
+  color: #b2a49a;
+}
+
+.container .btn {
+  min-height: 42px;
+  height: auto;
+  margin-top: 4px;
+  border-color: #51453d;
+  border-radius: 9px;
+  background: #302a26;
+  color: #f2ebe5;
+}
+
+.container :deep(.el-button--primary) {
+  border-color: #ff5500;
+  background: #ff5500;
+  color: #fff;
+  font-weight: 700;
+}
+
+.container :deep(.el-button--primary:hover) {
+  border-color: #e94c00;
+  background: #e94c00;
+}
+
+.container :deep(.el-input__wrapper),
+.container :deep(.el-input-group__append) {
+  border-color: #443a33;
+  background: #282320;
+  box-shadow: 0 0 0 1px #443a33 inset;
+}
+
+.container :deep(.el-input__inner),
+.container :deep(.el-input-group__append) {
+  color: #f2ebe5;
+}
+
+.container :deep(.el-input__inner::placeholder) {
+  color: #a99b91;
+}
+
+.container .switch {
+  color: #b2a49a;
+}
+
+.container .switch span {
+  color: #ff7b3d;
+}
+
+.github {
+  border-color: #403731;
+  background: #211e1b;
+}
+
+.github :deep(svg) {
+  color: #ff7b3d !important;
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 28px 22px;
+  }
+
+  .login-brand {
+    margin-bottom: 26px;
+  }
 }
 
 </style>

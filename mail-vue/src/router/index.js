@@ -22,9 +22,27 @@ const routes = [
                 }
             },
             {
+                path: '/mail',
+                name: 'mail',
+                component: () => import('@/views/mail-ui/index.vue'),
+                meta: {title: 'inbox', name: 'email', menu: true}
+            },
+            {
+                path: '/sent',
+                name: 'send',
+                component: () => import('@/views/mail-ui/index.vue'),
+                meta: {title: 'sent', name: 'send', menu: true}
+            },
+            {
+                path: '/drafts',
+                name: 'draft',
+                component: () => import('@/views/mail-ui/index.vue'),
+                meta: {title: 'drafts', name: 'draft', menu: true}
+            },
+            {
                 path: '/messages',
                 name: 'content',
-                component: () => import('@/views/content/index.vue'),
+                component: () => import('@/views/mail-ui/index.vue'),
                 meta: {
                     title: 'message',
                     name: 'content',
@@ -34,7 +52,7 @@ const routes = [
             {
                 path: '/settings',
                 name: 'setting',
-                component: () => import('@/views/setting/index.vue'),
+                component: () => import('@/views/mail-ui/index.vue'),
                 meta: {
                     title: 'settings',
                     name: 'setting',
@@ -44,7 +62,7 @@ const routes = [
             {
                 path: '/starred',
                 name: 'star',
-                component: () => import('@/views/star/index.vue'),
+                component: () => import('@/views/mail-ui/index.vue'),
                 meta: {
                     title: 'starred',
                     name: 'star',

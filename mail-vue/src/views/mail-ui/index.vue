@@ -274,6 +274,7 @@
 <script setup>
 import {computed, onBeforeUnmount, onMounted, ref, watch} from 'vue'
 import {Icon} from '@iconify/vue'
+import {useRoute} from 'vue-router'
 import {useAccountStore} from '@/store/account.js'
 import {useUserStore} from '@/store/user.js'
 import router from '@/router/index.js'
@@ -283,6 +284,13 @@ import '@/mail-ui/styles.css'
 
 const accountStore = useAccountStore()
 const userStore = useUserStore()
+const route = useRoute()
+const folderFromPath = (path) => {
+  if (path === '/sent') return 'sent'
+  if (path === '/drafts') return 'drafts'
+  if (path === '/starred') return 'starred'
+  return 'inbox'
+}
 const account = computed(() => {
   const user = userStore.user || {}
   const activeAccount = accountStore.currentAccount?.accountId
@@ -300,9 +308,10 @@ const folders = [
   {id: 'inbox', name: 'Inbox', icon: 'hugeicons:mailbox-01'},
   {id: 'starred', name: 'Starred', icon: 'solar:star-line-duotone'},
   {id: 'sent', name: 'Sent', icon: 'cil:send'},
+  {id: 'drafts', name: 'Drafts', icon: 'ep:document'},
 ]
 const filters = ['all', 'unread', 'starred']
-const folder = ref('inbox')
+const folder = ref(folderFromPath(route.path))
 const filter = ref('all')
 const query = ref('')
 const drawerOpen = ref(false)
@@ -408,10 +417,11 @@ async function openMessage(id) {
 }
 
 function selectFolder(nextFolder) {
-  folder.value = nextFolder
   filter.value = 'all'
   activeMessageId.value = null
   drawerOpen.value = false
+  const paths = {inbox: '/inbox', starred: '/starred', sent: '/sent', drafts: '/drafts'}
+  if (route.path !== paths[nextFolder]) void router.push(paths[nextFolder])
 }
 
 async function toggleStar(message) {
@@ -527,6 +537,12 @@ watch(() => account.value.accountId, (accountId, previousAccountId) => {
   composeOpen.value = false
   sending.value = false
   void refreshMessages()
+})
+
+watch(() => route.path, (path) => {
+  folder.value = folderFromPath(path)
+  filter.value = 'all'
+  activeMessageId.value = null
 })
 
 onBeforeUnmount(() => {
