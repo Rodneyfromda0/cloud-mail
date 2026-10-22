@@ -39,11 +39,33 @@
           </template>
           <template #suffix>
             <div style="display: flex;margin-right: 3px;">
+              <el-dropdown v-if="groups.length" trigger="click" @command="addContactGroup">
+                <Icon icon="fluent:people-team-20-regular" width="20" height="20" class="add-contact" />
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item v-for="group in groups" :key="group.groupId" :command="group.groupId">
+                      {{ group.name }} ({{ group.emails.length }})
+                    </el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
               <Icon icon="fa7-solid:user-plus" width="20" height="20" class="add-contact" @click.stop="openContacts" />
             </div>
           </template>
         </el-input-tag>
-        <el-input v-model="form.subject" :placeholder="t('subject')" />
+        <div class="subject-row">
+          <el-input v-model="form.subject" :placeholder="t('subject')" />
+          <el-select
+            v-if="templates.length"
+            v-model="selectedTemplateId"
+            placeholder="Insert template"
+            clearable
+            @change="applyTemplate"
+          >
+            <el-option v-for="template in templates" :key="template.templateId"
+                       :label="template.name" :value="template.templateId" />
+          </el-select>
+        </div>
         <tinyEditor :def-value="defValue" ref="editor" @change="change" @focus="focusChange" />
         <div class="button-item">
           <div class="att-add" @click="chooseFile">
@@ -124,6 +146,7 @@ import dayjs from "dayjs";
 import {useI18n} from "vue-i18n";
 import router from "@/router/index.js";
 import {ElMessageBox} from "element-plus";
+import {mailboxGroups, mailboxTemplates} from "@/request/mailbox.js";
 
 defineExpose({
   open,
@@ -147,6 +170,9 @@ let sending = false
 const defValue = ref('')
 const contactsTabRef = ref({})
 const showContacts = ref(false)
+const groups = ref([])
+const templates = ref([])
+const selectedTemplateId = ref(null)
 const mySelect = ref()
 let selectStatus = false
 const backReply = reactive({
@@ -222,6 +248,22 @@ function chooseContact() {
   });
 
   showContacts.value = false
+}
+
+function addContactGroup(groupId) {
+  const group = groups.value.find(item => item.groupId === groupId)
+  if (!group) return
+  for (const email of group.emails) {
+    if (!form.receiveEmail.includes(email)) form.receiveEmail.push(email)
+  }
+}
+
+function applyTemplate(templateId) {
+  const template = templates.value.find(item => item.templateId === templateId)
+  if (!template) return
+  form.subject = template.subject
+  defValue.value = template.content
+  selectedTemplateId.value = null
 }
 
 function clearSelectContact() {
@@ -440,6 +482,8 @@ function resetForm() {
   form.sendType = ''
   form.emailId = 0
   form.draftId = null
+  defValue.value = ''
+  selectedTemplateId.value = null
   backReply.content = ''
   backReply.subject = ''
   backReply.receiveEmail = []
@@ -530,6 +574,12 @@ function formatImage(content) {
 }
 
 function open() {
+  Promise.all([mailboxGroups(), mailboxTemplates()])
+    .then(([groupRows, templateRows]) => {
+      groups.value = groupRows
+      templates.value = templateRows
+    })
+    .catch(error => console.error(error))
   if (!accountStore.currentAccount.email) {
     form.sendEmail = userStore.user.email;
     form.accountId = userStore.user.account.accountId;
@@ -559,6 +609,12 @@ const handleKeyDown = (event) => {
 
 onMounted(() => {
   window.addEventListener('keydown', handleKeyDown);
+  Promise.all([mailboxGroups(), mailboxTemplates()])
+    .then(([groupRows, templateRows]) => {
+      groups.value = groupRows
+      templates.value = templateRows
+    })
+    .catch(error => console.error(error))
 });
 
 onUnmounted(() => {
@@ -716,6 +772,12 @@ function close() {
       display: grid;
       grid-template-rows: auto auto 1fr auto;
       gap: 15px;
+
+      .subject-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(150px, 230px);
+        gap: 10px;
+      }
 
       .item-title {
       }

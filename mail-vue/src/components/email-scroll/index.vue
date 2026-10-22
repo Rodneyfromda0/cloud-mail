@@ -18,6 +18,20 @@
         <Icon v-perm="'email:delete'" class="icon delete" icon="fluent:mail-read-20-regular" width="21" height="21"
               v-if="getSelectedMailsIds().length > 0 && showUnread"
               @click="handleRead"/>
+        <el-dropdown
+            v-if="mailboxActions.length && getSelectedMailsIds().length"
+            trigger="click"
+            @command="applyMailboxAction"
+        >
+          <el-button size="small" plain>{{ $t('organize') }}</el-button>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item v-for="action in mailboxActions" :key="action.value" :command="action.value">
+                {{ action.label }}
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
       </div>
 
       <div class="header-right">
@@ -56,7 +70,7 @@
               <div v-if="!showStar"></div>
               <div class="title" :class="accountShow ? 'title-column' : 'title-column'">
 
-                <div class="email-sender" :style=" (showStatus ? 'gap: 10px;' : '') + ((item.unread === EmailUnreadEnum.UNREAD && showUnread)  ? 'font-weight: bold' : '')">
+                <div class="email-sender" :style=" (showStatus ? 'gap: 10px;' : '') + ((item.type === 0 && item.unread === EmailUnreadEnum.UNREAD && showUnread)  ? 'font-weight: bold' : '')">
                   <div class="email-status" v-if="showStatus">
                     <el-tooltip effect="dark" :content="item.statusIcon.content">
                       <Icon :icon="item.statusIcon.icon" :style="`color: ${item.statusIcon.color}`" width="20" height="20"/>
@@ -70,7 +84,7 @@
                   <div v-else></div>
                   <span class="name">
                     <span>
-                      <div class="unread" v-if="isMobile && (item.unread === EmailUnreadEnum.UNREAD && showUnread) "/>
+                      <div class="unread" v-if="isMobile && item.type === 0 && item.unread === EmailUnreadEnum.UNREAD && showUnread "/>
                       <slot name="name" :email="item"> {{ item.name }}</slot>
                     </span>
                     <span>
@@ -81,8 +95,8 @@
                 </div>
                 <div>
                   <div class="email-text">
-                    <span class="email-subject" :style="(item.unread === EmailUnreadEnum.UNREAD && showUnread)  ? 'font-weight: bold' : ''">
-                      <div class="unread" v-if="!isMobile && (item.unread === EmailUnreadEnum.UNREAD && showUnread) "/>
+                    <span class="email-subject" :style="(item.type === 0 && item.unread === EmailUnreadEnum.UNREAD && showUnread)  ? 'font-weight: bold' : ''">
+                      <div class="unread" v-if="!isMobile && item.type === 0 && item.unread === EmailUnreadEnum.UNREAD && showUnread "/>
                       <span v-if="item.code" class="code-tag" @click.stop="copyCode(item.code)">[{{ t('codeLabel') }}{{ item.code }}]</span>
                       <span class="subject-text">
                         <slot name="subject" :email="item" >
@@ -252,6 +266,11 @@ const props = defineProps({
   getEmailList: Function,
   emailDelete: Function,
   emailRead: Function,
+  mailboxAction: Function,
+  mailboxActions: {
+    type: Array,
+    default: () => []
+  },
   starAdd: Function,
   starCancel: Function,
   cancelSuccess: Function,
@@ -692,6 +711,22 @@ function handleDelete() {
       emailStore.deleteIds = emailIds;
     })
   })
+}
+
+async function applyMailboxAction(action) {
+  const ids = getSelectedMailsIds();
+  if (!ids.length || !props.mailboxAction) return;
+  try {
+    await props.mailboxAction(ids, action);
+    refreshList();
+  } catch (error) {
+    console.error(error);
+    ElMessage({
+      message: error.message || t('actionFailed'),
+      type: 'error',
+      plain: true
+    });
+  }
 }
 
 function deleteEmail(emailIds) {

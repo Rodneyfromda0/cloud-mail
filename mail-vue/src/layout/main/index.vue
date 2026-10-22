@@ -147,20 +147,28 @@ const handleResize = () => {
 .main-box-show {
   display: grid;
   grid-template-columns: 260px  1fr;
+  min-height: 0;
   height: calc(100% - 60px);
   @media (max-width: 767px) {
     grid-template-columns: 1fr;
+    height: calc(100% - 50px);
   }
 }
 
 .main-box-hide {
   display: grid;
   grid-template-columns: 1fr;
+  min-height: 0;
   height: calc(100% - 60px);
+  @media (max-width: 767px) {
+    height: calc(100% - 50px);
+  }
 }
 
 
 .main-view {
+  min-height: 0;
+  overflow: hidden;
   background: var(--el-bg-color);
 }
 

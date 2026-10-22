@@ -1,8 +1,6 @@
 import {createRouter, createWebHistory} from 'vue-router'
 import NProgress from 'nprogress';
 import {useUiStore} from "@/store/ui.js";
-import {useSettingStore} from "@/store/setting.js";
-import {cvtR2Url} from "@/utils/convert.js";
 
 const routes = [
     {
@@ -69,6 +67,30 @@ const routes = [
                     menu: true
                 }
             },
+            {
+                path: '/folders/:folderKey',
+                name: 'mail-folder',
+                component: () => import('@/views/folder/index.vue'),
+                meta: {title: 'mail', name: 'mail-folder', menu: true}
+            },
+            {
+                path: '/settings/folders',
+                name: 'folder-settings',
+                component: () => import('@/views/folder-settings/index.vue'),
+                meta: {title: 'folderSettings', name: 'folder-settings', menu: true}
+            },
+            {
+                path: '/templates',
+                name: 'templates',
+                component: () => import('@/views/templates/index.vue'),
+                meta: {title: 'templates', name: 'templates', menu: true}
+            },
+            {
+                path: '/groups',
+                name: 'groups',
+                component: () => import('@/views/groups/index.vue'),
+                meta: {title: 'groups', name: 'groups', menu: true}
+            },
         ]
 
     },
@@ -104,7 +126,7 @@ NProgress.configure({
 let timer
 let first = true
 
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, _from, next) => {
 
     if (timer) {
         clearTimeout(timer)
@@ -123,48 +145,16 @@ router.beforeEach((to, from, next) => {
     }
 
     if (!token && to.path.startsWith('/login')) {
-        loadBackground(next)
-        return
+        return next()
     }
 
     if (token && to.path.startsWith('/login')) {
-        return next(from.path)
+        return next({name: 'layout'})
     }
 
     next()
 
 })
-
-function loadBackground(next) {
-
-    const settingStore = useSettingStore();
-
-    if (settingStore.settings.background) {
-
-        const src = cvtR2Url(settingStore.settings.background);
-
-        const img = new Image();
-        img.src = src;
-
-        img.onload = () => {
-            next()
-        };
-
-        img.onerror = () => {
-            console.warn("背景图片加载失败:", img.src);
-            next()
-        };
-
-        setTimeout(() => {
-            console.warn("背景加载超时，已放行");
-            next()
-        }, 3000)
-
-    } else {
-        next()
-    }
-
-}
 
 router.afterEach((to) => {
 

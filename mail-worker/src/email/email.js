@@ -123,6 +123,8 @@ export async function email(message, env, ctx) {
 			messageId: email.messageId,
 			userId: account ? account.userId : 0,
 			accountId: account ? account.accountId : 0,
+			mailboxFolder: 'inbox',
+			category: emailUtils.classifyIncomingEmail(email.from.address, email.headers),
 			isDel: isDel.DELETE,
 			status: emailConst.status.SAVING
 		};

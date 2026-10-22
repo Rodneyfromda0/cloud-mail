@@ -3,10 +3,12 @@
                :cancel-success="cancelStar"
                :star-success="addStar"
                :getEmailList="getEmailList"
-               :emailDelete="emailDelete"
+               :emailDelete="deleteMessages"
                :star-add="starAdd"
                :star-cancel="starCancel"
-               :email-read="emailRead"
+               :email-read="markRead"
+               :mailbox-actions="mailboxActions"
+               :mailbox-action="applyMailboxAction"
                :show-unread="true"
                actionLeft="4px"
                @jump="jumpContent"
@@ -21,6 +23,7 @@ import {useSettingStore} from "@/store/setting.js";
 import emailScroll from "@/components/email-scroll/index.vue"
 import {emailList, emailDelete, emailLatest, emailRead} from "@/request/email.js";
 import {starAdd, starCancel} from "@/request/star.js";
+import {mailboxFolderList, mailboxMove} from "@/request/mailbox.js";
 import {defineOptions, onMounted, ref, watch} from "vue";
 import {sleep} from "@/utils/time-utils.js";
 import router from "@/router/index.js";
@@ -35,9 +38,25 @@ const emailStore = useEmailStore();
 const accountStore = useAccountStore();
 const settingStore = useSettingStore();
 const scroll = ref({})
+const mailboxActions = ref([
+  {label: 'Archive', value: 'archive'},
+  {label: 'Move to Spam', value: 'spam'},
+  {label: 'Move to Trash', value: 'trash'},
+  {label: 'Snooze for 1 hour', value: 'snooze-hour'},
+  {label: 'Snooze until tomorrow', value: 'snooze-tomorrow'},
+  {label: 'Mark as Newsletter', value: 'category:newsletter'},
+  {label: 'Mark as Notification', value: 'category:notification'},
+  {label: 'Mark as Primary', value: 'category:primary'},
+])
 onMounted(() => {
   emailStore.emailScroll = scroll;
   latest()
+  mailboxFolderList().then(folders => {
+    mailboxActions.value.push(...folders.map(folder => ({
+      label: `Move to ${folder.name}`,
+      value: `custom:${folder.folderId}`,
+    })))
+  }).catch(error => console.error(error))
 })
 
 
@@ -111,6 +130,7 @@ async function latest() {
               }
 
             }
+            window.dispatchEvent(new Event('mailbox:updated'))
 
           }
 
@@ -143,6 +163,34 @@ function getEmailList(emailId, size) {
     data.latestEmail.allReceive = allReceive;
     return data;
   })
+}
+
+function markRead(ids) {
+  return emailRead(ids).then(result => {
+    window.dispatchEvent(new Event('mailbox:updated'))
+    return result
+  })
+}
+
+function deleteMessages(ids) {
+  return emailDelete(ids).then(result => {
+    window.dispatchEvent(new Event('mailbox:updated'))
+    return result
+  })
+}
+
+async function applyMailboxAction(ids, action) {
+  if (action.startsWith('category:')) {
+    await mailboxMove(ids, {category: action.slice('category:'.length)})
+  } else if (action.startsWith('custom:')) {
+    await mailboxMove(ids, {customFolderId: Number(action.slice('custom:'.length))})
+  } else if (action === 'snooze-hour' || action === 'snooze-tomorrow') {
+    const delay = action === 'snooze-hour' ? 60 * 60 * 1000 : 24 * 60 * 60 * 1000
+    await mailboxMove(ids, 'snoozed', new Date(Date.now() + delay).toISOString())
+  } else {
+    await mailboxMove(ids, action)
+  }
+  window.dispatchEvent(new Event('mailbox:updated'))
 }
 
 </script>

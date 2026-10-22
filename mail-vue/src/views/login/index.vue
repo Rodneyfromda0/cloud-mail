@@ -1,34 +1,12 @@
 <template>
-  <div id="login-box" class="login-surface" v-loading="oauthLoading" element-loading-text="登录中...">
-    <div v-if="settingStore.settings.background" class="login-background-image" :style="background"></div>
-    <div class="login-top-actions">
-      <span class="login-language">{{ settingStore.lang === 'zh' ? '中文' : 'English' }}</span>
-    </div>
+  <div id="login-box" class="login-surface" v-loading="oauthLoading" element-loading-text="Signing in...">
     <main class="login-layout">
-      <section class="login-story">
-        <div class="login-brand">
-          <img :src="xpassLogo" alt="XPass" />
-          <span>XPass <em>Mail</em></span>
-        </div>
-        <div class="login-story-copy">
-          <p class="login-eyebrow">XPass Mail</p>
-          <h1>The Event Ends.<br /><span>The Relationship Shouldn't.</span></h1>
-          <p class="login-story-description">
-            Engineering The Future Of Event Ticketing. Powering The Future Of Live Experiences.
-          </p>
-        </div>
-        <div class="login-story-foot" aria-hidden="true"></div>
-      </section>
-
       <section class="login-panel">
-        <div class="login-brand login-brand-mobile">
-          <img :src="xpassLogo" alt="XPass" />
-          <span>XPass <em>Mail</em></span>
-        </div>
-        <div class="login-card">
+            <div class="login-card" :class="{ registering: show !== 'login' }">
+          <img class="login-logo" src="/xpass-logo.png" alt="XPass" />
           <h2>{{ show === 'login' ? 'Sign In' : $t('regTitle') }}</h2>
           <p class="login-card-description">
-            {{ show === 'login' ? 'Sign in with your @getxpass.net credentials to continue.' : $t('loginTitle') }}
+            {{ show === 'login' ? 'Sign in to continue.' : $t('loginTitle') }}
           </p>
 
           <form v-show="show === 'login'" class="auth-form" @submit.prevent="submit">
@@ -151,9 +129,7 @@
         </div>
       </section>
     </main>
-    <footer class="login-footer">© 2027 GetXPass Limited</footer>
-
-    <el-dialog class="bind-dialog" v-model="showBindForm" title="注册邮箱">
+    <el-dialog class="bind-dialog" v-model="showBindForm" title="Connect your email">
       <div class="bind-container">
         <el-input v-model="bindForm.email" type="text" :placeholder="$t('emailAccount')" autocomplete="off" @keyup.enter="bind">
           <template v-if="!hideLoginDomain" #append>
@@ -168,7 +144,7 @@
         </el-input>
         <el-input v-if="settingStore.settings.regKey === 0" v-model="bindForm.code" :placeholder="$t('regKey')" type="text" autocomplete="off" @keyup.enter="bind" />
         <el-input v-if="settingStore.settings.regKey === 2" v-model="bindForm.code" :placeholder="$t('regKeyOptional')" type="text" autocomplete="off" @keyup.enter="bind" />
-        <el-button class="auth-submit" type="primary" :loading="bindLoading" @click="bind">绑定</el-button>
+        <el-button class="auth-submit" type="primary" :loading="bindLoading" @click="bind">Connect account</el-button>
       </div>
     </el-dialog>
   </div>
@@ -185,19 +161,15 @@ import {isEmail} from "@/utils/verify-utils.js";
 import {useSettingStore} from "@/store/setting.js";
 import {useAccountStore} from "@/store/account.js";
 import {useUserStore} from "@/store/user.js";
-import {useUiStore} from "@/store/ui.js";
 import {Icon} from "@iconify/vue";
-import {cvtR2Url} from "@/utils/convert.js";
 import {loginUserInfo} from "@/request/my.js";
 import {permsToRouter} from "@/perm/perm.js";
 import {useI18n} from "vue-i18n";
 import {oauthBindUser, oauthLinuxDoLogin, oauthGithubLogin, oauthGoogleLogin} from "@/request/ouath.js";
-import xpassLogo from '@/mail-ui/xpass-logo.png'
 
 const {t} = useI18n();
 const accountStore = useAccountStore();
 const userStore = useUserStore();
-const uiStore = useUiStore();
 const settingStore = useSettingStore();
 const route = useRoute();
 const loginLoading = ref(false)
@@ -261,7 +233,7 @@ window.onTurnstileError = (e) => {
     return
   }
   verifyErrorCount++
-  console.warn('人机验加载失败', e)
+  console.warn('Turnstile verification failed to load', e)
   setTimeout(() => {
     nextTick(() => {
       if (!turnstileId) {
@@ -281,22 +253,7 @@ window.loadBefore = (e) => {
   console.log('loadBefore')
 }
 
-const loginOpacity = computed(() => {
-  const opacity = settingStore.settings.loginOpacity
-  return uiStore.dark ? `rgba(0, 0, 0, ${opacity})` : `rgba(255, 255, 255, ${opacity})`
-})
-
 const hideLoginDomain = computed(() => settingStore.settings.loginDomain === 1)
-
-const background = computed(() => {
-
-  return settingStore.settings.background ? {
-    'background-image': `url(${cvtR2Url(settingStore.settings.background)})`,
-    'background-repeat': 'no-repeat',
-    'background-size': 'cover',
-    'background-position': 'center'
-  } : ''
-})
 
 const openSelect = () => {
   mySelect.value.toggleMenu()
@@ -349,7 +306,7 @@ async function oauthGetUser() {
       showBindForm.value = true
       oauthLoading.value = false
       ElMessage({
-        message: '请注册绑定一个邮箱',
+        message: 'Register an email address to connect this account.',
         type: 'warning',
         duration: 4000,
         plain: true,
@@ -475,7 +432,6 @@ async function saveToken(token) {
     router.addRoute('layout', routerData);
   });
   await router.replace({name: 'layout'})
-  uiStore.showNotice()
   oauthLoading.value = false;
   bindLoading.value = false;
 }
@@ -487,7 +443,7 @@ function refreshWebsiteConfig() {
     if (!suffix.value && setting.domainList.length > 0) {
       suffix.value = setting.domainList[0]
     }
-    document.title = setting.title
+    document.title = 'XPass'
   }).catch(e => {
     console.error(e)
   })
@@ -580,7 +536,7 @@ function submitRegister() {
             turnstileId = window.turnstile.render('.register-turnstile')
           } catch (e) {
             botJsError.value = true
-            console.log('人机验证js加载失败')
+            console.log('Turnstile verification failed to load')
           }
         } else {
           window.turnstile.reset('.register-turnstile')
@@ -655,6 +611,356 @@ function submitRegister() {
 }
 </style>
 
+<style scoped>
+#login-box {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100vh;
+  height: 100svh;
+  min-height: 0;
+  overflow: hidden;
+  background: #181614;
+}
+
+.login-layout {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  place-items: center;
+  padding: 16px;
+}
+
+.login-panel {
+  display: block;
+  width: min(420px, 100%);
+  padding: 0;
+}
+
+.login-card {
+  max-height: calc(100svh - 32px);
+  overflow: hidden;
+  padding: 22px 26px;
+}
+
+.login-logo {
+  height: 54px;
+  margin-bottom: 12px;
+}
+
+.auth-form {
+  gap: 13px;
+  margin-top: 18px;
+}
+
+@media (max-width: 720px) {
+  .login-layout {
+    padding: 12px;
+  }
+
+  .login-card {
+    max-height: calc(100svh - 24px);
+    padding: 20px;
+  }
+}
+</style>
+
+<style scoped>
+#login-box {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100vh;
+  height: 100svh;
+  min-height: 0;
+  overflow: hidden;
+  color: #f2ebe5;
+  background: #181614;
+}
+
+.login-layout {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  place-items: center;
+  padding: 16px;
+}
+
+.login-panel {
+  display: block;
+  width: min(420px, 100%);
+  padding: 0;
+}
+
+.login-card {
+  width: 100%;
+  max-width: none;
+  max-height: calc(100svh - 32px);
+  overflow: hidden;
+  padding: 22px 26px;
+  border: 1px solid #403731;
+  border-radius: 14px;
+  background: #211e1b;
+}
+
+.login-logo {
+  display: block;
+  width: min(190px, 60%);
+  height: 54px;
+  margin: 0 auto 12px;
+  object-fit: contain;
+}
+
+.login-card h2 {
+  margin: 0;
+  color: #f2ebe5;
+  font-size: 24px;
+  text-align: center;
+}
+
+.login-card-description {
+  margin: 6px 0 0;
+  color: #b2a49a;
+  font-size: 13px;
+  text-align: center;
+}
+
+.auth-form {
+  display: grid;
+  gap: 13px;
+  margin-top: 18px;
+}
+
+.auth-field {
+  display: grid;
+  gap: 7px;
+}
+
+.auth-field > label {
+  color: #e6ded7;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.auth-field :deep(.el-input__wrapper) {
+  min-height: 42px;
+  border-radius: 7px;
+  background: #181614;
+  box-shadow: 0 0 0 1px #443a33 inset;
+}
+
+.auth-field :deep(.el-input__inner) {
+  color: #f2ebe5;
+}
+
+.auth-field :deep(.el-input-group__append) {
+  border: 0;
+  border-left: 1px solid #403731;
+  background: #302a26;
+  color: #c1b4aa;
+}
+
+.domain-picker {
+  position: relative;
+  display: flex;
+  min-height: 40px;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.domain-picker .select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.auth-submit {
+  width: 100%;
+  min-height: 42px;
+  margin: 2px 0 0 !important;
+  border-color: #ff5500;
+  border-radius: 7px;
+  background: #ff5500;
+  color: #fff;
+  font-weight: 700;
+}
+
+.auth-submit:hover,
+.auth-submit:focus {
+  border-color: #e94c00;
+  background: #e94c00;
+  color: #fff;
+}
+
+.oauth-list {
+  display: grid;
+  gap: 8px;
+}
+
+.oauth-button {
+  width: 100%;
+  min-height: 40px;
+  margin: 0 !important;
+  border: 1px solid #51453d;
+  border-radius: 7px;
+  background: #302a26;
+  color: #f2ebe5;
+}
+
+.oauth-button:hover {
+  border-color: #766354;
+  background: #39312c;
+  color: #fff;
+}
+
+.auth-switch {
+  margin-top: 14px;
+  color: #b2a49a;
+  font-size: 12px;
+  text-align: center;
+}
+
+.auth-switch button {
+  margin-left: 4px;
+  padding: 0;
+  background: none;
+  color: #ff7b3d;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.register-turnstile {
+  margin-bottom: 0;
+}
+
+.verify-error {
+  color: #f87171;
+  font-size: 12px;
+}
+
+.bind-container {
+  display: grid;
+  gap: 14px;
+}
+
+.bind-dialog :deep(.el-dialog) {
+  border: 1px solid #403731;
+  border-radius: 12px;
+  background: #211e1b;
+}
+
+.bind-dialog :deep(.el-dialog__title),
+.bind-dialog :deep(.el-dialog__body) {
+  color: #f2ebe5;
+}
+
+.login-card.registering {
+  overflow-y: auto;
+}
+
+@media (max-width: 720px) {
+  .login-layout {
+    padding: 12px;
+  }
+
+  .login-card {
+    max-height: calc(100svh - 24px);
+    padding: 20px;
+  }
+}
+</style>
+
+<style scoped>
+#login-box {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100vh;
+  height: 100svh;
+  min-height: 0;
+  overflow: hidden;
+  background: #181614;
+}
+
+.login-layout {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  place-items: center;
+  padding: 16px;
+}
+
+.login-panel {
+  display: block;
+  width: min(420px, 100%);
+  padding: 0;
+}
+
+.login-card {
+  width: 100%;
+  max-width: none;
+  max-height: calc(100svh - 32px);
+  overflow: hidden;
+  padding: 22px 26px;
+  border-color: #403731;
+  border-radius: 14px;
+  background: #211e1b;
+}
+
+.login-logo {
+  display: block;
+  width: min(190px, 60%);
+  height: 64px;
+  margin: 0 auto 14px;
+  object-fit: contain;
+}
+
+.login-card h2 {
+  text-align: center;
+}
+
+.login-card-description {
+  margin-top: 6px;
+  text-align: center;
+}
+
+.auth-form {
+  gap: 13px;
+  margin-top: 18px;
+}
+
+.auth-switch {
+  margin-top: 14px;
+}
+
+.login-card.registering {
+  overflow-y: auto;
+}
+
+@media (max-width: 720px) {
+  #login-box {
+    overflow: hidden;
+  }
+
+  .login-layout {
+    display: grid;
+    min-height: 0;
+    padding: 12px;
+  }
+
+  .login-card {
+    max-height: calc(100svh - 24px);
+    padding: 20px;
+  }
+}
+</style>
+
 <style lang="scss" scoped>
 
 .form-wrapper {
@@ -671,7 +977,7 @@ function submitRegister() {
 }
 
 .container {
-  background: v-bind(loginOpacity);
+  background: rgba(33, 30, 27, .96);
   padding-left: 40px;
   padding-right: 40px;
   display: flex;
@@ -824,41 +1130,6 @@ function submitRegister() {
 #background-wrap {
   height: 100%;
   z-index: 0;
-}
-
-@keyframes animateCloud {
-  0% {
-    margin-left: -500px;
-  }
-
-  100% {
-    margin-left: 100%;
-  }
-}
-
-.x1 {
-  animation: animateCloud 30s linear infinite;
-  transform: scale(0.65);
-}
-
-.x2 {
-  animation: animateCloud 15s linear infinite;
-  transform: scale(0.3);
-}
-
-.x3 {
-  animation: animateCloud 25s linear infinite;
-  transform: scale(0.5);
-}
-
-.x4 {
-  animation: animateCloud 13s linear infinite;
-  transform: scale(0.4);
-}
-
-.x5 {
-  animation: animateCloud 20s linear infinite;
-  transform: scale(0.55);
 }
 
 .cloud {
@@ -1363,4 +1634,59 @@ function submitRegister() {
   }
 }
 
+</style>
+
+<style scoped>
+#login-box {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100vh;
+  height: 100svh;
+  min-height: 0;
+  overflow: hidden;
+  background: #181614;
+}
+
+.login-layout {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  place-items: center;
+  padding: 16px;
+}
+
+.login-panel {
+  display: block;
+  width: min(420px, 100%);
+  padding: 0;
+}
+
+.login-card {
+  max-height: calc(100svh - 32px);
+  overflow: hidden;
+  padding: 22px 26px;
+}
+
+.login-logo {
+  height: 54px;
+  margin-bottom: 12px;
+}
+
+.auth-form {
+  gap: 13px;
+  margin-top: 18px;
+}
+
+@media (max-width: 720px) {
+  .login-layout {
+    padding: 12px;
+  }
+
+  .login-card {
+    max-height: calc(100svh - 24px);
+    padding: 20px;
+  }
+}
 </style>

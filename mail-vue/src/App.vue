@@ -1,20 +1,16 @@
 <template>
-  <el-config-provider :locale="settingStore.lang === 'zh' ? zhCn : null">
+  <el-config-provider>
     <router-view />
   </el-config-provider>
 </template>
 <script setup>
 import { useI18n } from "vue-i18n";
 import { watch } from "vue";
-import {useSettingStore} from "@/store/setting.js";
 import {useUiStore} from "@/store/ui.js";
-const settingStore = useSettingStore()
 const uiStore = useUiStore()
-import zhCn from 'element-plus/es/locale/lang/zh-cn';
 import('@/icons/index.js')
 const { locale } = useI18n()
-locale.value = settingStore.lang
-watch(() => settingStore.lang, () => locale.value = settingStore.lang)
+locale.value = 'en'
 watch(() => uiStore.dark, (dark) => {
   document.documentElement.classList.toggle('dark', dark)
 }, {immediate: true})
@@ -33,7 +29,10 @@ watch(() => uiStore.dark, (dark) => {
 html,
 body,
 #app {
+  width: 100%;
+  height: 100%;
   min-height: 100%;
+  overflow: hidden;
   background: var(--el-bg-color-page);
 }
 </style>
