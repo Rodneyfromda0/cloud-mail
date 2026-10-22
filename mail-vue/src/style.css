@@ -146,31 +146,48 @@ button, input, select, textarea {
 }
 
 .dark {
-    --extra-light-fill: #191919;
-    --settings-page-background: var(--extra-light-fill);
-    --light-ill: #262727;
-    --light-border: #414243;
-    --aside-backgound: #141414;
-    --aside-menu-active-background: rgba(255, 255, 255, 0.08);
+    color-scheme: dark;
+    --el-color-primary: #ff5500;
+    --el-color-primary-dark-2: #d94700;
+    --el-color-primary-light-3: #ff7b3d;
+    --el-color-primary-light-5: #ff9b6b;
+    --el-color-primary-light-7: #ffbd9e;
+    --el-color-primary-light-9: #39241a;
+    --el-bg-color: #181614;
+    --el-bg-color-page: #181614;
+    --el-bg-color-overlay: #211e1b;
+    --el-fill-color-light: #302a26;
+    --el-fill-color-blank: #211e1b;
+    --el-text-color-primary: #f2ebe5;
+    --el-text-color-regular: #c1b4aa;
+    --el-text-color-secondary: #a99b91;
+    --el-border-color: #403731 !important;
+    --el-border-color-light: #403731;
+    --el-border-color-lighter: #403731;
+    --extra-light-fill: #181614;
+    --settings-page-background: #181614;
+    --light-ill: #25211e;
+    --light-border: #403731;
+    --aside-backgound: #1d1a18;
+    --aside-menu-active-background: rgba(255, 85, 0, 0.15);
     --header-actions-border: inset 0 -1px 0 0 var(--el-border-color-lighter);
     --loadding-background: rgba(0, 0, 0, 0.3);
-    --dark-border: #636466;
-    --base-fill: #303030;
-    --regular-text-color: #bfbdbc;
-    --light-border-color: #414243;
-    --aside-right-border: 3px 0 5px #0A0A0A;
-    --choose-account-background: #39393A;
+    --dark-border: #403731;
+    --base-fill: #302a26;
+    --regular-text-color: #c1b4aa;
+    --light-border-color: #403731;
+    --aside-right-border: 3px 0 5px #0A0908;
+    --choose-account-background: rgba(255, 85, 0, 0.15);
     --email-scroll-content-color: rgba(255, 255, 255, 0.3);
-    --email-hover-background: #1D1E1F;
+    --email-hover-background: #27221f;
     --email-right-click-background: var(--email-hover-background);
     --login-border: none;
-    --form-desc-color: #8D9095;
+    --form-desc-color: #a99b91;
     --login-switch-color: rgb(102, 177, 255);
-    --scrollbar-track-color: #8D9095;
-    --base-border-color: #4C4D4F;
-    --secondary-text-color: #A3A6AD;
-    --message-block-color: rgba(30, 30, 30, 0.2);
-    --el-border-color: #414243 !important;
+    --scrollbar-track-color: #8c7b70;
+    --base-border-color: #403731;
+    --secondary-text-color: #a99b91;
+    --message-block-color: rgba(24, 22, 20, 0.2);
 }
 
 .el-input {

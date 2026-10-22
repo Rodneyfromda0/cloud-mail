@@ -359,9 +359,9 @@ function formatName(email) {
   .writer {
     width: 34px;
     height: 34px;
-    border-radius: 50%;
+    border-radius: 10px;
     color: #ffffff;
-    background: linear-gradient(135deg, #1890ff, #3a80dd);
+    background: linear-gradient(135deg, #ff5500, #c43b00);
     transition: all 0.3s ease;
     display: flex;
     align-items: center;
@@ -382,9 +382,9 @@ function formatName(email) {
       box-sizing: border-box;
       width: 32px;
       height: 32px;
-      border-radius: 6px;
-      border: 1px solid var(--el-color-primary);
-      color: var(--el-color-white);
+      border-radius: 8px;
+      border: 1px solid #ff5500;
+      color: #fff;
       background: var(--el-color-primary);
     }
   }
@@ -444,7 +444,7 @@ function formatName(email) {
       display: flex;
       justify-content: center;
       align-items: center;
-      border-radius: 8px;
+      border-radius: 10px;
       border: 1px solid var(--dark-border);
     }
 
