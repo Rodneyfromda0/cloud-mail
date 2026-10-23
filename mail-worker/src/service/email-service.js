@@ -395,9 +395,18 @@ const emailService = {
 		}
 
 		const userRow = await userService.selectById(c, userId);
-		content = `${content || ''}${signatureService.html(userRow, c.req.url)}`;
-		if (userRow.signatureText) {
-			text = `${text || ''}\n\n${userRow.signatureText}`;
+		const accountRow = await accountService.selectById(c, accountId);
+		if (!accountRow) {
+			throw new BizError(t('senderAccountNotExist'));
+		}
+		if (accountRow.userId !== userId) {
+			throw new BizError(t('sendEmailNotCurUser'));
+		}
+
+		const signatureProfile = accountRow.signatureText || accountRow.signatureImageKey ? accountRow : userRow;
+		content = `${content || ''}${signatureService.html(signatureProfile, c.req.url)}`;
+		if (signatureProfile.signatureText) {
+			text = `${text || ''}\n\n${signatureProfile.signatureText}`;
 		}
 		let { imageDataList, html } = await attService.toImageUrlHtml(c, content);
 		const roleRow = await roleService.selectById(c, userRow.type);
@@ -435,16 +444,6 @@ const emailService = {
 				if (roleRow.sendType === 'count') throw new BizError(t('totalSendLack'), 403);
 			}
 
-		}
-
-		const accountRow = await accountService.selectById(c, accountId);
-
-		if (!accountRow) {
-			throw new BizError(t('senderAccountNotExist'));
-		}
-
-		if (accountRow.userId !== userId) {
-			throw new BizError(t('sendEmailNotCurUser'));
 		}
 
 		if (c.env.admin !== userRow.email) {

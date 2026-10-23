@@ -1,7 +1,7 @@
 <template>
   <div class="box">
     <div class="header-actions">
-      <Icon class="icon" icon="material-symbols-light:arrow-back-ios-new" width="20" height="20" @click="handleBack"/>
+      <Icon class="icon" :icon="embedded ? 'material-symbols-light:close-rounded' : 'material-symbols-light:arrow-back-ios-new'" width="20" height="20" @click="handleBack"/>
       <Icon v-perm="'email:delete'" class="icon" icon="uiw:delete" width="16" height="16" @click="handleDelete"/>
       <span class="star" v-if="emailStore.contentData.showStar">
         <Icon class="icon" @click="changeStar" v-if="email.isStar" icon="fluent-color:star-16" width="20" height="20"/>
@@ -93,6 +93,8 @@ import {useUiStore} from "@/store/ui.js";
 import {useI18n} from "vue-i18n";
 import {EmailUnreadEnum} from "@/enums/email-enum.js";
 
+const props = defineProps({embedded: {type: Boolean, default: false}})
+const emit = defineEmits(['close'])
 const uiStore = useUiStore();
 const settingStore = useSettingStore();
 const accountStore = useAccountStore();
@@ -231,7 +233,11 @@ function changeStar() {
 }
 
 const handleBack = () => {
-  router.back()
+  if (props.embedded) {
+    emit('close')
+  } else {
+    router.back()
+  }
 }
 
 const handleDelete = () => {
@@ -261,7 +267,7 @@ const handleDelete = () => {
       })
     }
 
-    router.back()
+    handleBack()
   })
 }
 </script>

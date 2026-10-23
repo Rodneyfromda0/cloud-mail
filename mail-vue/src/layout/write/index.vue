@@ -39,16 +39,6 @@
           </template>
           <template #suffix>
             <div style="display: flex;margin-right: 3px;">
-              <el-dropdown v-if="groups.length" trigger="click" @command="addContactGroup">
-                <Icon icon="fluent:people-team-20-regular" width="20" height="20" class="add-contact" />
-                <template #dropdown>
-                  <el-dropdown-menu>
-                    <el-dropdown-item v-for="group in groups" :key="group.groupId" :command="group.groupId">
-                      {{ group.name }} ({{ group.emails.length }})
-                    </el-dropdown-item>
-                  </el-dropdown-menu>
-                </template>
-              </el-dropdown>
               <Icon icon="fa7-solid:user-plus" width="20" height="20" class="add-contact" @click.stop="openContacts" />
             </div>
           </template>
@@ -74,6 +64,7 @@
           <div class="att-clear" @click="clearContent">
             <Icon icon="icon-park-outline:clear-format" width="24" height="24 "/>
           </div>
+          <el-button plain @click="saveCurrentAsTemplate">Save as template</el-button>
           <div class="att-list">
             <div class="att-item" v-for="(item,index) in form.attachments" :key="index">
               <Icon v-bind="getIconByName(item.filename)"/>
@@ -146,7 +137,8 @@ import dayjs from "dayjs";
 import {useI18n} from "vue-i18n";
 import router from "@/router/index.js";
 import {ElMessageBox} from "element-plus";
-import {mailboxGroups, mailboxTemplates} from "@/request/mailbox.js";
+import {ElMessage} from "element-plus";
+import {mailboxTemplates, mailboxTemplateSave} from "@/request/mailbox.js";
 
 defineExpose({
   open,
@@ -170,7 +162,6 @@ let sending = false
 const defValue = ref('')
 const contactsTabRef = ref({})
 const showContacts = ref(false)
-const groups = ref([])
 const templates = ref([])
 const selectedTemplateId = ref(null)
 const mySelect = ref()
@@ -250,20 +241,58 @@ function chooseContact() {
   showContacts.value = false
 }
 
-function addContactGroup(groupId) {
-  const group = groups.value.find(item => item.groupId === groupId)
-  if (!group) return
-  for (const email of group.emails) {
-    if (!form.receiveEmail.includes(email)) form.receiveEmail.push(email)
-  }
-}
-
-function applyTemplate(templateId) {
+async function applyTemplate(templateId) {
   const template = templates.value.find(item => item.templateId === templateId)
   if (!template) return
-  form.subject = template.subject
-  defValue.value = template.content
+  const source = `${template.subject || ''}\n${template.content || ''}`
+  const variables = [...new Set([...source.matchAll(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g)].map(match => match[1]))]
+  const recipient = form.receiveEmail[0] || ''
+  const values = {
+    sender_name: form.name,
+    recipient_name: recipient
+      ? recipient.split('@')[0].replace(/[._+-]+/g, ' ').replace(/\b\w/g, letter => letter.toUpperCase())
+      : undefined
+  }
+  try {
+    for (const variable of variables) {
+      if (values[variable] !== undefined) continue
+      const {value} = await ElMessageBox.prompt(`Enter a value for ${variable}.`, 'Template variable', {
+        inputValue: '',
+        confirmButtonText: 'Insert',
+        cancelButtonText: 'Cancel'
+      })
+      values[variable] = value
+    }
+  } catch (action) {
+    if (action === 'cancel' || action === 'close') return
+    throw action
+  }
+  const substitute = value => value.replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (_match, key) => values[key] || '')
+  form.subject = substitute(template.subject || '')
+  defValue.value = substitute(template.content || '')
   selectedTemplateId.value = null
+}
+
+async function saveCurrentAsTemplate() {
+  const content = editor.value.getContent()
+  if (!form.subject.trim() && !content.trim()) {
+    ElMessage({message: 'Add a subject or message before saving a template.', type: 'warning'})
+    return
+  }
+  try {
+    const {value: name} = await ElMessageBox.prompt('Name this reusable template.', 'Save as template', {
+      inputValue: form.subject || '',
+      confirmButtonText: 'Save',
+      cancelButtonText: 'Cancel',
+      inputValidator: value => !!value?.trim() || 'Enter a template name.'
+    })
+    await mailboxTemplateSave({name: name.trim(), subject: form.subject, content})
+    templates.value = await mailboxTemplates()
+    ElMessage({message: 'Template saved.', type: 'success'})
+  } catch (action) {
+    if (action === 'cancel' || action === 'close') return
+    ElMessage({message: action?.message || 'Could not save the template.', type: 'error'})
+  }
 }
 
 function clearSelectContact() {
@@ -574,11 +603,8 @@ function formatImage(content) {
 }
 
 function open() {
-  Promise.all([mailboxGroups(), mailboxTemplates()])
-    .then(([groupRows, templateRows]) => {
-      groups.value = groupRows
-      templates.value = templateRows
-    })
+  mailboxTemplates()
+    .then(templateRows => templates.value = templateRows)
     .catch(error => console.error(error))
   if (!accountStore.currentAccount.email) {
     form.sendEmail = userStore.user.email;
@@ -609,11 +635,8 @@ const handleKeyDown = (event) => {
 
 onMounted(() => {
   window.addEventListener('keydown', handleKeyDown);
-  Promise.all([mailboxGroups(), mailboxTemplates()])
-    .then(([groupRows, templateRows]) => {
-      groups.value = groupRows
-      templates.value = templateRows
-    })
+  mailboxTemplates()
+    .then(templateRows => templates.value = templateRows)
     .catch(error => console.error(error))
 });
 

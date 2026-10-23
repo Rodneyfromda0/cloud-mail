@@ -13,7 +13,7 @@
       >
         <Icon icon="cil:send" width="20" height="20" />
         <span>SEND MAIL</span>
-        <kbd aria-hidden="true">C</kbd>
+        <kbd aria-hidden="true">[C]</kbd>
       </el-button>
       <el-menu :collapse="false" text-color="#fff" active-text-color="#fff">
         <div class="section-title">QUICK FILTERS</div>
@@ -26,15 +26,6 @@
           <Icon icon="fluent:mail-unread-20-regular" width="20" height="20" />
           <span class="menu-name">All unread</span>
           <span v-if="counts.unread" class="count-badge">{{ badge(counts.unread) }}</span>
-        </el-menu-item>
-        <el-menu-item @click="openGroupDialog" index="create-group">
-          <Icon icon="fluent:people-team-add-20-regular" width="20" height="20" />
-          <span class="menu-name">Create a group</span>
-        </el-menu-item>
-        <el-menu-item @click="router.push({name: 'groups'})" index="groups"
-                      :class="route.name === 'groups' ? 'choose-item' : ''">
-          <Icon icon="fluent:people-team-20-regular" width="20" height="20" />
-          <span class="menu-name">Manage groups</span>
         </el-menu-item>
         <div class="folder-tools">
           <span>FOLDERS</span>
@@ -171,20 +162,6 @@
         <el-button type="primary" :loading="saving" @click="createFolder">Create</el-button>
       </template>
     </el-dialog>
-    <el-dialog v-model="showGroupDialog" title="Create contact group" width="520px">
-      <el-form label-position="top">
-        <el-form-item label="Group name">
-          <el-input v-model="groupForm.name" maxlength="60" />
-        </el-form-item>
-        <el-form-item label="Email addresses (comma or line separated)">
-          <el-input v-model="groupForm.emails" type="textarea" :rows="4" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="showGroupDialog = false">{{ $t('cancel') }}</el-button>
-        <el-button type="primary" :loading="saving" @click="createGroup">Create</el-button>
-      </template>
-    </el-dialog>
   </el-scrollbar>
 </template>
 
@@ -194,7 +171,7 @@ import { useRoute } from "vue-router";
 import {Icon} from "@iconify/vue";
 import {useUiStore} from "@/store/ui.js";
 import {onMounted, onUnmounted, ref, watch} from "vue";
-import {mailboxCounts, mailboxFolderCreate, mailboxFolderList, mailboxGroupCreate} from "@/request/mailbox.js";
+import {mailboxCounts, mailboxFolderCreate, mailboxFolderList} from "@/request/mailbox.js";
 import {userDraftStore} from "@/store/draft.js";
 import db from "@/db/db.js";
 
@@ -204,9 +181,7 @@ const draftStore = userDraftStore();
 const folders = ref([]);
 const counts = ref({});
 const showFolderDialog = ref(false);
-const showGroupDialog = ref(false);
 const folderName = ref('');
-const groupForm = ref({name: '', emails: ''});
 const saving = ref(false);
 const draftCount = ref(0);
 let countRefreshTimer;
@@ -230,11 +205,6 @@ function badge(value) {
   return count > 99 ? '99+' : count;
 }
 
-function openGroupDialog() {
-  groupForm.value = {name: '', emails: ''};
-  showGroupDialog.value = true;
-}
-
 async function createFolder() {
   if (!folderName.value.trim()) return;
   saving.value = true;
@@ -243,17 +213,6 @@ async function createFolder() {
     folderName.value = '';
     showFolderDialog.value = false;
     await refreshNavigation();
-  } finally {
-    saving.value = false;
-  }
-}
-
-async function createGroup() {
-  const emails = groupForm.value.emails.split(/[,\n;]/).map(email => email.trim()).filter(Boolean);
-  saving.value = true;
-  try {
-    await mailboxGroupCreate({name: groupForm.value.name, emails});
-    showGroupDialog.value = false;
   } finally {
     saving.value = false;
   }
@@ -303,12 +262,13 @@ function openCompose() {
 }
 
 .compose-cta {
-  display: flex;
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) auto;
+  align-items: center;
   width: calc(100% - 36px);
   height: 46px;
   margin: 0 18px 20px;
-  justify-content: flex-start;
-  gap: 12px;
+  gap: 8px;
   padding: 0 14px;
   border: 0;
   border-radius: 11px;
@@ -347,6 +307,10 @@ function openCompose() {
   font-weight: 600;
   line-height: 1.4;
   letter-spacing: 0;
+}
+
+.compose-cta span {
+  text-align: center;
 }
 
 .section-title {

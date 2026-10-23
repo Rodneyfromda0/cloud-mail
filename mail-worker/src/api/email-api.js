@@ -64,28 +64,6 @@ app.put('/mailbox/category', async (c) => {
 	return c.json(result.ok());
 });
 
-app.get('/mailbox/groups', async (c) => {
-	return c.json(result.ok(await mailboxService.listGroups(c, userId(c))));
-});
-
-app.post('/mailbox/groups', async (c) => {
-	return c.json(result.ok(await mailboxService.createGroup(c, userId(c), await c.req.json())));
-});
-
-app.put('/mailbox/groups/:groupId', async (c) => {
-	return c.json(result.ok(await mailboxService.updateGroup(c, userId(c), c.req.param('groupId'), await c.req.json())));
-});
-
-app.put('/mailbox/groups/:groupId/members', async (c) => {
-	const { emails } = await c.req.json();
-	return c.json(result.ok(await mailboxService.updateGroupMembers(c, userId(c), c.req.param('groupId'), emails)));
-});
-
-app.delete('/mailbox/groups/:groupId', async (c) => {
-	await mailboxService.deleteGroup(c, userId(c), c.req.param('groupId'));
-	return c.json(result.ok());
-});
-
 app.get('/mailbox/templates', async (c) => {
 	return c.json(result.ok(await mailboxService.listTemplates(c, userId(c))));
 });

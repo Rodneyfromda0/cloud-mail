@@ -85,12 +85,6 @@ const routes = [
                 component: () => import('@/views/templates/index.vue'),
                 meta: {title: 'templates', name: 'templates', menu: true}
             },
-            {
-                path: '/groups',
-                name: 'groups',
-                component: () => import('@/views/groups/index.vue'),
-                meta: {title: 'groups', name: 'groups', menu: true}
-            },
         ]
 
     },

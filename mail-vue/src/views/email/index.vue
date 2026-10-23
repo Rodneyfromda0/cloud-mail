@@ -1,5 +1,6 @@
 <template>
-  <emailScroll ref="scroll"
+  <div class="inbox-workspace">
+    <emailScroll ref="scroll"
                :cancel-success="cancelStar"
                :star-success="addStar"
                :getEmailList="getEmailList"
@@ -9,11 +10,20 @@
                :email-read="markRead"
                :mailbox-actions="mailboxActions"
                :mailbox-action="applyMailboxAction"
+               :selected-email-id="emailStore.contentData.email?.emailId || 0"
                :show-unread="true"
                actionLeft="4px"
                @jump="jumpContent"
-  >
-  </emailScroll>
+    />
+    <section class="reading-pane" aria-label="Email reader">
+      <ContentView
+        v-if="emailStore.contentData.email"
+        embedded
+        @close="closeReader"
+      />
+      <el-empty v-else description="Select an email to read" />
+    </section>
+  </div>
 </template>
 
 <script setup>
@@ -24,10 +34,11 @@ import emailScroll from "@/components/email-scroll/index.vue"
 import {emailList, emailDelete, emailLatest, emailRead} from "@/request/email.js";
 import {starAdd, starCancel} from "@/request/star.js";
 import {mailboxFolderList, mailboxMove} from "@/request/mailbox.js";
-import {defineOptions, onMounted, ref, watch} from "vue";
+import {computed, defineOptions, onMounted, onUnmounted, ref, watch} from "vue";
 import {sleep} from "@/utils/time-utils.js";
 import router from "@/router/index.js";
 import { useRoute } from 'vue-router'
+import ContentView from '@/views/content/index.vue'
 
 defineOptions({
   name: 'email'
@@ -38,6 +49,7 @@ const emailStore = useEmailStore();
 const accountStore = useAccountStore();
 const settingStore = useSettingStore();
 const scroll = ref({})
+const isDesktop = ref(window.innerWidth >= 1024)
 const mailboxActions = ref([
   {label: 'Archive', value: 'archive'},
   {label: 'Move to Spam', value: 'spam'},
@@ -50,6 +62,7 @@ const mailboxActions = ref([
 ])
 onMounted(() => {
   emailStore.emailScroll = scroll;
+  window.addEventListener('resize', updateDesktopLayout)
   latest()
   mailboxFolderList().then(folders => {
     mailboxActions.value.push(...folders.map(folder => ({
@@ -58,6 +71,14 @@ onMounted(() => {
     })))
   }).catch(error => console.error(error))
 })
+
+onUnmounted(() => {
+  window.removeEventListener('resize', updateDesktopLayout)
+})
+
+function updateDesktopLayout() {
+  isDesktop.value = window.innerWidth >= 1024
+}
 
 
 watch(() => accountStore.currentAccountId, () => {
@@ -78,7 +99,12 @@ function jumpContent(email) {
   emailStore.contentData.showUnread = true
   emailStore.contentData.showStar = true
   emailStore.contentData.showReply = true
-  router.push('/messages')
+  if (!isDesktop.value) router.push('/messages')
+}
+
+function closeReader() {
+  emailStore.contentData.email = null
+  emailStore.contentData.showUnread = false
 }
 
 const existIds = new Set();
@@ -197,5 +223,35 @@ async function applyMailboxAction(ids, action) {
 <style>
 .icon {
   cursor: pointer;
+}
+</style>
+<style scoped>
+.inbox-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.reading-pane {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border-left: 1px solid var(--el-border-color);
+}
+
+.reading-pane :deep(.el-empty) {
+  height: 100%;
+}
+
+@media (max-width: 1023px) {
+  .inbox-workspace {
+    display: block;
+  }
+
+  .reading-pane {
+    display: none;
+  }
 }
 </style>

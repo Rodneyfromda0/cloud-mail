@@ -3,7 +3,7 @@
     <div class="page-header">
       <div>
         <h2>Email templates</h2>
-        <p>Save reusable subject lines and message content for the composer.</p>
+        <p>Save reusable subject lines and message content. Use <code v-pre>{{recipient_name}}</code>, <code v-pre>{{company}}</code>, and <code v-pre>{{sender_name}}</code> for personalized values.</p>
       </div>
       <el-button type="primary" @click="startNew">New template</el-button>
     </div>

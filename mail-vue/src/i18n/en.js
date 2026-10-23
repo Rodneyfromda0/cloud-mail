@@ -5,7 +5,6 @@ const en = {
     sent: 'Sent',
     starred: 'Starred',
     templates: 'Templates',
-    groups: 'Contact groups',
     folderSettings: 'Folder management',
     settings: 'Settings',
     analytics: 'Dashboard',

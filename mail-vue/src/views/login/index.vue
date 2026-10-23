@@ -443,7 +443,7 @@ function refreshWebsiteConfig() {
     if (!suffix.value && setting.domainList.length > 0) {
       suffix.value = setting.domainList[0]
     }
-    document.title = 'XPass'
+    document.title = 'XPass Mail'
   }).catch(e => {
     console.error(e)
   })

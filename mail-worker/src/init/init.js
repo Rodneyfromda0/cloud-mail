@@ -34,8 +34,24 @@ const dbInit = {
 		await this.v3_3DB(c);
 		await this.v3_4DB(c);
 		await this.v3_5DB(c);
+		await this.v3_6DB(c);
 		await settingService.refresh(c);
 		return c.text('success');
+	},
+
+	async v3_6DB(c) {
+		for (const [column, definition] of [
+			['signature_image_key', 'TEXT'],
+			['signature_text', "TEXT NOT NULL DEFAULT ''"]
+		]) {
+			try {
+				await c.env.db.prepare(`ALTER TABLE account ADD COLUMN ${column} ${definition};`).run();
+			} catch (error) {
+				if (!error.message?.toLowerCase().includes('duplicate column')) {
+					throw error;
+				}
+			}
+		}
 	},
 
 	async v3_5DB(c) {
@@ -70,20 +86,6 @@ const dbInit = {
 				created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
 				PRIMARY KEY(email_id, folder_id)
 			);`),
-			c.env.db.prepare(`CREATE TABLE IF NOT EXISTS contact_group (
-				group_id INTEGER PRIMARY KEY AUTOINCREMENT,
-				user_id INTEGER NOT NULL,
-				name TEXT NOT NULL,
-				created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-				UNIQUE(user_id, name)
-			);`),
-			c.env.db.prepare(`CREATE TABLE IF NOT EXISTS contact_group_member (
-				group_id INTEGER NOT NULL,
-				user_id INTEGER NOT NULL,
-				email TEXT NOT NULL,
-				created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-				PRIMARY KEY(group_id, email)
-			);`),
 			c.env.db.prepare(`CREATE TABLE IF NOT EXISTS email_template (
 				template_id INTEGER PRIMARY KEY AUTOINCREMENT,
 				user_id INTEGER NOT NULL,
@@ -98,8 +100,6 @@ const dbInit = {
 			c.env.db.prepare(`CREATE INDEX IF NOT EXISTS idx_email_mailbox_folder ON email(user_id, mailbox_folder, email_id);`),
 			c.env.db.prepare(`CREATE INDEX IF NOT EXISTS idx_email_category ON email(user_id, category, email_id);`),
 			c.env.db.prepare(`CREATE INDEX IF NOT EXISTS idx_email_snoozed_until ON email(user_id, snoozed_until);`),
-			c.env.db.prepare(`CREATE INDEX IF NOT EXISTS idx_contact_group_user ON contact_group(user_id, group_id);`),
-			c.env.db.prepare(`CREATE INDEX IF NOT EXISTS idx_contact_group_member_user ON contact_group_member(user_id, group_id);`),
 			c.env.db.prepare(`CREATE INDEX IF NOT EXISTS idx_email_template_user ON email_template(user_id, template_id);`)
 		]);
 	},

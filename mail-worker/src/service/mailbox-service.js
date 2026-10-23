@@ -2,7 +2,6 @@ import BizError from '../error/biz-error';
 
 const SYSTEM_FOLDERS = new Set(['inbox', 'sent', 'archive', 'spam', 'trash']);
 const CATEGORIES = new Set(['primary', 'newsletter', 'notification']);
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_MESSAGE_IDS = 95;
 
 function database(c) {
@@ -172,82 +171,6 @@ const mailboxService = {
 			.bind(params.category, userId, ...ids).run();
 	},
 
-	async listGroups(c, userId) {
-		const db = database(c);
-		const { results: groups } = await db.prepare(
-			'SELECT group_id AS groupId, name FROM contact_group WHERE user_id = ? ORDER BY name COLLATE NOCASE'
-		).bind(userId).all();
-		const { results: members } = await db.prepare(
-			'SELECT group_id AS groupId, email FROM contact_group_member WHERE user_id = ? ORDER BY email COLLATE NOCASE'
-		).bind(userId).all();
-		const membersByGroup = new Map();
-		for (const member of members) {
-			if (!membersByGroup.has(member.groupId)) membersByGroup.set(member.groupId, []);
-			membersByGroup.get(member.groupId).push(member.email);
-		}
-		return groups.map(group => ({ ...group, emails: membersByGroup.get(group.groupId) || [] }));
-	},
-
-	async createGroup(c, userId, params) {
-		const name = validateName(params?.name, 'Group name');
-		const emails = normalizeEmails(params?.emails);
-		const group = await database(c).prepare(
-			'INSERT INTO contact_group (user_id, name) VALUES (?, ?) RETURNING group_id AS groupId, name'
-		).bind(userId, name).first();
-		if (emails.length) await this.updateGroupMembers(c, userId, group.groupId, emails);
-		return { ...group, emails };
-	},
-
-	async updateGroup(c, userId, groupId, params) {
-		const id = Number(groupId);
-		const name = validateName(params?.name, 'Group name');
-		if (!Number.isSafeInteger(id) || id <= 0) throw new BizError('Invalid group.', 400);
-		const db = database(c);
-		const group = await db.prepare(
-			'SELECT group_id FROM contact_group WHERE user_id = ? AND group_id = ?'
-		).bind(userId, id).first();
-		if (!group) throw new BizError('Group not found.', 404);
-		const statements = [
-			db.prepare('UPDATE contact_group SET name = ? WHERE user_id = ? AND group_id = ?').bind(name, userId, id)
-		];
-		let emails;
-		if (params?.emails !== undefined) {
-			emails = normalizeEmails(params.emails);
-			statements.push(db.prepare('DELETE FROM contact_group_member WHERE user_id = ? AND group_id = ?').bind(userId, id));
-			statements.push(...emails.map(email => db.prepare(
-				'INSERT INTO contact_group_member (group_id, user_id, email) VALUES (?, ?, ?)'
-			).bind(id, userId, email)));
-		}
-		await db.batch(statements);
-		return {groupId: id, name, ...(emails === undefined ? {} : {emails})};
-	},
-
-	async deleteGroup(c, userId, groupId) {
-		const id = Number(groupId);
-		if (!Number.isSafeInteger(id) || id <= 0) throw new BizError('Invalid group.', 400);
-		await database(c).batch([
-			database(c).prepare('DELETE FROM contact_group_member WHERE user_id = ? AND group_id = ?').bind(userId, id),
-			database(c).prepare('DELETE FROM contact_group WHERE user_id = ? AND group_id = ?').bind(userId, id)
-		]);
-	},
-
-	async updateGroupMembers(c, userId, groupId, emails) {
-		const id = Number(groupId);
-		const normalized = normalizeEmails(emails);
-		const group = await database(c).prepare(
-			'SELECT group_id FROM contact_group WHERE user_id = ? AND group_id = ?'
-		).bind(userId, id).first();
-		if (!group) throw new BizError('Group not found.', 404);
-		const statements = [
-			database(c).prepare('DELETE FROM contact_group_member WHERE user_id = ? AND group_id = ?').bind(userId, id),
-			...normalized.map(email => database(c).prepare(
-				'INSERT INTO contact_group_member (group_id, user_id, email) VALUES (?, ?, ?)'
-			).bind(id, userId, email))
-		];
-		await database(c).batch(statements);
-		return { groupId: id, emails: normalized };
-	},
-
 	async listTemplates(c, userId) {
 		const { results } = await database(c).prepare(`
 			SELECT template_id AS templateId, name, subject, content
@@ -284,13 +207,5 @@ const mailboxService = {
 			.bind(userId, id).run();
 	}
 };
-
-function normalizeEmails(value) {
-	if (value == null) return [];
-	if (!Array.isArray(value) || value.length > 95) throw new BizError('Contact groups are limited to 95 addresses.', 400);
-	const emails = [...new Set(value.map(email => String(email).trim().toLowerCase()).filter(Boolean))];
-	if (emails.some(email => !EMAIL_PATTERN.test(email))) throw new BizError('Group addresses must be valid email addresses.', 400);
-	return emails;
-}
 
 export default mailboxService;

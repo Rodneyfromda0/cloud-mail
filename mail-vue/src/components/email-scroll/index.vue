@@ -52,7 +52,7 @@
                         :key="keyCount"
         >
           <template #default="{ data: item, index }" >
-            <div :class="['email-row', props.type, { 'right-checked': item.rightChecked }]"
+            <div :class="['email-row', props.type, { 'right-checked': item.rightChecked, 'selected-email': item.emailId === selectedEmailId }]"
                  :data-checked="item.checked"
                  @click="jumpDetails(item)"
                  v-if="!item.expand"
@@ -314,7 +314,11 @@ const props = defineProps({
   showUnread: {
     type: Boolean,
     default: false
-  }
+  },
+  selectedEmailId: {
+    type: Number,
+    default: 0
+  },
 })
 
 const emit = defineEmits(['jump', 'refresh-before', 'delete-draft', 'right-search'])
@@ -1023,6 +1027,11 @@ function loadData() {
   height: 48px;
   @media (max-width: 1366px) {
     height: 83px;
+  }
+
+  :deep(.email-row.selected-email) {
+    background: rgba(255, 85, 0, 0.1);
+    box-shadow: inset 3px 0 #ff5500;
   }
 
   @media (pointer: coarse) {
