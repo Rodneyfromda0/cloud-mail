@@ -8,10 +8,9 @@
           <h1>The event ends.<br /><em>The relationship shouldn’t.</em></h1>
           <p>Powering the infrastructure behind seamless event commerce and organizer success.</p>
         </div>
-        <div class="login-brand-footer">Confidential system. Access limited to authorized personnel.</div>
       </section>
       <section class="login-panel">
-            <div class="login-card">
+        <div class="login-card">
           <h2>Sign In</h2>
           <p class="login-card-description">
             Sign in to continue.
@@ -66,6 +65,7 @@
           </form>
 
         </div>
+        <div class="login-brand-footer">Confidential system. Access limited to authorized personnel.</div>
       </section>
     </main>
     <el-dialog class="bind-dialog" v-model="showBindForm" title="Connect your email">
@@ -1926,11 +1926,18 @@ function refreshWebsiteConfig() {
 }
 
 .login-brand {
+  position: relative;
   display: flex;
   min-width: 0;
   height: min(590px, 76vh);
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-end;
+}
+
+.login-brand-copy {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 .login-brand-logo {
@@ -1941,8 +1948,16 @@ function refreshWebsiteConfig() {
 }
 
 .login-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 14px;
   width: 100%;
   min-width: 0;
+}
+
+.login-brand-footer {
+  text-align: center;
 }
 
 .login-card {
@@ -1954,6 +1969,27 @@ function refreshWebsiteConfig() {
 
 .login-logo {
   display: none;
+}
+
+@media (min-width: 801px) and (max-height: 700px) {
+  .login-brand {
+    height: auto;
+    justify-content: center;
+    gap: 24px;
+  }
+
+  .login-brand-copy {
+    position: static;
+    transform: none;
+  }
+
+  .login-brand-copy h1 {
+    font-size: clamp(34px, 4vw, 48px);
+  }
+
+  .login-brand-copy p {
+    margin-top: 14px;
+  }
 }
 
 @media (max-width: 800px) {
