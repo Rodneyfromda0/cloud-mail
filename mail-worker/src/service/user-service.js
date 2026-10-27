@@ -37,6 +37,10 @@ const userService = {
 			roleService.selectById(c, userRow.type),
 			userRow.email === c.env.admin ? Promise.resolve(['*']) : permService.userPermKeys(c, userId)
 		]);
+		if (account) {
+			account.signatureImageUrl = signatureService.imageUrl(c.req.url, account.signatureImageKey);
+			delete account.signatureImageKey;
+		}
 
 		const user = {};
 		user.userId = userRow.userId;

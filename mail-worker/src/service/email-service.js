@@ -436,11 +436,14 @@ const emailService = {
 			throw new BizError(t('sendEmailNotCurUser'));
 		}
 
-		const signatureProfile = accountRow.signatureText || accountRow.signatureImageKey ? accountRow : userRow;
-		const signatureHtml = userRow.signature || signatureService.html(signatureProfile, c.req.url);
+		const accountHasSignature = accountRow.signatureText || accountRow.signatureImageKey;
+		const signatureProfile = accountHasSignature ? accountRow : userRow;
+		const signatureHtml = accountHasSignature
+			? signatureService.html(accountRow, c.req.url)
+			: userRow.signature || signatureService.html(userRow, c.req.url);
 		if (signatureIncluded !== true) {
 			content = `${content || ''}${signatureHtml}`;
-			if (!userRow.signature && signatureProfile.signatureText) {
+			if (!accountHasSignature && !userRow.signature && signatureProfile.signatureText) {
 				text = `${text || ''}\n\n${signatureProfile.signatureText}`;
 			}
 		}

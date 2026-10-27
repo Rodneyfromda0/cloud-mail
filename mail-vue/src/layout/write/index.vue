@@ -215,14 +215,13 @@ function escapeHtml(value) {
 }
 
 function getComposeSignatureHtml() {
-  const signature = sanitizeSignatureHtml(userStore.user.signature || '')
-  if (signature) return signature
-
   const account = accountStore.currentAccount || {}
   const user = userStore.user || {}
-  const profile = account.signatureText || account.signatureImageUrl
-    ? account
-    : user
+  const accountHasSignature = Boolean(account.signatureText || account.signatureImageUrl)
+  const profile = accountHasSignature ? account : user
+  const htmlSignature = accountHasSignature ? '' : sanitizeSignatureHtml(user.signature || '')
+  if (htmlSignature) return htmlSignature
+
   const text = profile.signatureText || profile.signature_text || ''
   const imageUrl = profile.signatureImageUrl || profile.signature_image_url
   if (!text && !imageUrl) return ''
