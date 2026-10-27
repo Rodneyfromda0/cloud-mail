@@ -1,20 +1,39 @@
 <template>
   <div class="inbox-workspace">
-    <emailScroll ref="scroll"
-               :cancel-success="cancelStar"
-               :star-success="addStar"
-               :getEmailList="getEmailList"
-               :emailDelete="deleteMessages"
-               :star-add="starAdd"
-               :star-cancel="starCancel"
-               :email-read="markRead"
-               :mailbox-actions="mailboxActions"
-               :mailbox-action="applyMailboxAction"
-               :selected-email-id="emailStore.contentData.email?.emailId || 0"
-               :show-unread="true"
-               actionLeft="4px"
-               @jump="jumpContent"
-    />
+    <section class="message-column" aria-label="Message list">
+      <header class="inbox-heading">
+        <div>
+          <div class="eyebrow">MAILBOX</div>
+          <h1>Inbox</h1>
+        </div>
+        <span class="account-label">{{ accountStore.currentAccount?.email || '' }}</span>
+      </header>
+      <nav class="inbox-filters" aria-label="Filter inbox">
+        <button
+          v-for="filter in inboxFilters"
+          :key="filter.key"
+          type="button"
+          :class="{ active: activeFilter === filter.key }"
+          :aria-pressed="activeFilter === filter.key"
+          @click="setInboxFilter(filter.key)"
+        >{{ filter.label }}</button>
+      </nav>
+      <emailScroll ref="scroll"
+                 :cancel-success="cancelStar"
+                 :star-success="addStar"
+                 :getEmailList="getEmailList"
+                 :emailDelete="deleteMessages"
+                 :star-add="starAdd"
+                 :star-cancel="starCancel"
+                 :email-read="markRead"
+                 :mailbox-actions="mailboxActions"
+                 :mailbox-action="applyMailboxAction"
+                 :selected-email-id="emailStore.contentData.email?.emailId || 0"
+                 :show-unread="true"
+                 actionLeft="4px"
+                 @jump="jumpContent"
+      />
+    </section>
     <section class="reading-pane" aria-label="Email reader">
       <ContentView
         v-if="emailStore.contentData.email"
@@ -49,7 +68,7 @@ const emailStore = useEmailStore();
 const accountStore = useAccountStore();
 const settingStore = useSettingStore();
 const scroll = ref({})
-const isDesktop = ref(window.innerWidth >= 1024)
+const isDesktop = ref(window.innerWidth >= 700)
 const mailboxActions = ref([
   {label: 'Archive', value: 'archive'},
   {label: 'Move to Spam', value: 'spam'},
@@ -60,6 +79,19 @@ const mailboxActions = ref([
   {label: 'Mark as Notification', value: 'category:notification'},
   {label: 'Mark as Primary', value: 'category:primary'},
 ])
+const inboxFilters = [
+  {key: 'all', label: 'All'},
+  {key: 'unread', label: 'Unread'},
+  {key: 'starred', label: 'Starred'},
+  {key: 'attachments', label: 'Attachments'},
+]
+const activeFilter = computed(() => {
+  const params = emailStore.searchParams
+  if (params.unreadOnly) return 'unread'
+  if (params.starredOnly) return 'starred'
+  if (params.hasAttachments) return 'attachments'
+  return 'all'
+})
 onMounted(() => {
   emailStore.emailScroll = scroll;
   window.addEventListener('resize', updateDesktopLayout)
@@ -77,7 +109,15 @@ onUnmounted(() => {
 })
 
 function updateDesktopLayout() {
-  isDesktop.value = window.innerWidth >= 1024
+  isDesktop.value = window.innerWidth >= 700
+}
+
+function setInboxFilter(filter) {
+  emailStore.setSearchParams({
+    unreadOnly: filter === 'unread',
+    starredOnly: filter === 'starred',
+    hasAttachments: filter === 'attachments',
+  })
 }
 
 
@@ -120,7 +160,8 @@ async function latest() {
     }
 
     const searchParams = emailStore.searchParams
-    if (searchParams.text || searchParams.startDate || searchParams.endDate) {
+    if (searchParams.text || searchParams.startDate || searchParams.endDate
+      || searchParams.unreadOnly || searchParams.starredOnly || searchParams.hasAttachments) {
       continue
     }
 
@@ -228,10 +269,91 @@ async function applyMailboxAction(ids, action) {
 <style scoped>
 .inbox-workspace {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: minmax(220px, 42%) minmax(0, 1fr);
   height: 100%;
   min-height: 0;
   overflow: hidden;
+  background: var(--el-bg-color);
+}
+
+.message-column {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border-right: 1px solid var(--el-border-color);
+  background: var(--el-bg-color);
+}
+
+.inbox-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 70px;
+  padding: 12px 18px;
+}
+
+.eyebrow {
+  margin-bottom: 3px;
+  color: var(--el-text-color-secondary);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .13em;
+}
+
+.inbox-heading h1 {
+  margin: 0;
+  color: var(--el-text-color-primary);
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -.025em;
+}
+
+.account-label {
+  max-width: 52%;
+  overflow: hidden;
+  color: var(--el-text-color-secondary);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.inbox-filters {
+  display: flex;
+  gap: 5px;
+  padding: 0 14px 10px;
+  border-bottom: 1px solid var(--el-border-color);
+}
+
+.inbox-filters button {
+  min-height: 29px;
+  padding: 0 11px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--el-text-color-secondary);
+  font-size: 11px;
+  font-weight: 550;
+  cursor: pointer;
+  transition: background-color .15s ease, color .15s ease, border-color .15s ease;
+}
+
+.inbox-filters button:hover {
+  background: var(--el-fill-color-light);
+  color: var(--el-text-color-primary);
+}
+
+.inbox-filters button.active {
+  border-color: var(--el-border-color);
+  background: #252321;
+  color: #fff;
+}
+
+.inbox-filters button.active:hover {
+  background: #383431;
+  color: #fff;
+  color: var(--el-text-color-primary);
 }
 
 .reading-pane {
@@ -245,13 +367,34 @@ async function applyMailboxAction(ids, action) {
   height: 100%;
 }
 
-@media (max-width: 1023px) {
+@media (max-width: 700px) {
   .inbox-workspace {
     display: block;
   }
 
+  .message-column {
+    height: 100%;
+    border-right: 0;
+  }
+
   .reading-pane {
     display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .inbox-heading {
+    min-height: 64px;
+    padding: 10px 14px;
+  }
+
+  .inbox-filters {
+    gap: 2px;
+    padding: 0 10px 10px;
+  }
+
+  .inbox-filters button {
+    padding: 0 9px;
   }
 }
 </style>

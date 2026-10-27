@@ -1,7 +1,7 @@
 <template>
   <div class="header" :class="{ 'not-send': !hasPerm('email:send') }">
     <div class="header-btn">
-      <hanburger @click="changeAside"></hanburger>
+      <hanburger @toggle-click="changeAside"></hanburger>
       <span class="breadcrumb-item">{{ $t(route.meta.title) }}</span>
     </div>
     <email-search
@@ -313,6 +313,8 @@ function formatName(email) {
   gap: 10px;
   grid-template-columns: auto minmax(0, 1fr) auto;
   position: relative;
+  background: var(--el-bg-color);
+  color: var(--el-text-color-primary);
 }
 
 .header.not-send {
@@ -384,7 +386,7 @@ function formatName(email) {
 
 .breadcrumb-item {
   font-weight: bold;
-  font-size: 14px;
+  font-size: 13px;
   color: var(--el-text-color-primary);
   overflow: hidden;
   white-space: nowrap;
@@ -429,7 +431,7 @@ function formatName(email) {
       display: flex;
       justify-content: center;
       align-items: center;
-      border-radius: 10px;
+      border-radius: 7px;
       border: 1px solid var(--dark-border);
     }
 
@@ -444,6 +446,7 @@ function formatName(email) {
 }
 
 .el-tooltip__trigger:first-child:focus-visible {
-  outline: unset;
+  outline: 2px solid rgba(255, 85, 0, .72);
+  outline-offset: 3px;
 }
 </style>

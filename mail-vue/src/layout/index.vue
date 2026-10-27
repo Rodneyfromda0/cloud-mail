@@ -31,7 +31,7 @@ import writer from '@/layout/write/index.vue'
 
 const uiStore = useUiStore();
 const writerRef = ref({})
-const isMobile = ref(window.innerWidth < 1025)
+const isMobile = ref(window.innerWidth < 700)
 function handleComposeShortcut(event) {
   const target = event.target
   const isTyping = target instanceof HTMLElement
@@ -42,7 +42,7 @@ function handleComposeShortcut(event) {
   uiStore.writerRef?.open()
 }
 const handleResize = () => {
-  const nextIsMobile = window.innerWidth < 1025
+  const nextIsMobile = window.innerWidth < 700
   if (nextIsMobile === isMobile.value) return
   isMobile.value = nextIsMobile
   uiStore.asideShow = !nextIsMobile
@@ -77,7 +77,7 @@ onBeforeUnmount(() => {
   transform: translateX(0);
   transition: transform 220ms ease;
   z-index: 101;
-  @media (max-width: 1025px) {
+  @media (max-width: 700px) {
     position: fixed;
     top: 0;
     left: 0;
@@ -88,13 +88,45 @@ onBeforeUnmount(() => {
 }
 
 .el-aside {
-  width: auto;
-  transition: all 100ms ease;
+  width: 294px !important;
+  flex: 0 0 294px;
+  transition: width 100ms ease, transform 220ms ease;
 }
 
 .layout {
+  --el-bg-color: #fff;
+  --el-bg-color-page: #f6f3f2;
+  --el-bg-color-overlay: #fff;
+  --el-fill-color-light: #f5f2f0;
+  --el-fill-color-blank: #fff;
+  --el-text-color-primary: #252321;
+  --el-text-color-regular: #504b47;
+  --el-text-color-secondary: #817a75;
+  --el-border-color: #e7e2de;
+  --el-border-color-light: #ece8e5;
+  --el-border-color-lighter: #f1eeeb;
+  --extra-light-fill: #fff;
+  --settings-page-background: #f6f3f2;
+  --light-ill: #f7f4f2;
+  --light-border: #e7e2de;
+  --aside-backgound: #fff;
+  --aside-menu-active-background: #fff2eb;
+  --header-actions-border: inset 0 -1px 0 0 #ece8e5;
+  --dark-border: #e1dcd8;
+  --base-fill: #f4f1ef;
+  --regular-text-color: #716a66;
+  --light-border-color: #e7e2de;
+  --aside-right-border: 1px 0 0 rgba(40, 30, 20, .08);
+  --choose-account-background: #fff2eb;
+  --email-scroll-content-color: #817a75;
+  --email-hover-background: #faf7f5;
+  --email-right-click-background: #fff4ed;
+  --scrollbar-track-color: #c8c1bc;
+  --base-border-color: #e7e2de;
+  --secondary-text-color: #8c8580;
+  --message-block-color: rgba(255, 255, 255, 0);
+  color-scheme: light;
   height: 100vh;
-  height: 100svh;
   height: 100svh;
   min-height: 0;
   position: fixed;
@@ -128,6 +160,20 @@ onBeforeUnmount(() => {
   @media (max-width: 767px) {
     height: 50px;
     flex-basis: 50px;
+  }
+}
+
+@media (max-width: 700px) {
+  .el-aside {
+    width: min(330px, calc(100vw - 42px)) !important;
+    flex-basis: min(330px, calc(100vw - 42px));
+  }
+}
+
+@media (min-width: 701px) and (max-width: 900px) {
+  .el-aside {
+    width: 248px !important;
+    flex-basis: 248px;
   }
 }
 

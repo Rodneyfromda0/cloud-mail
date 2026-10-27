@@ -43,6 +43,9 @@ const emailService = {
 			endDate,
 			folderKey,
 			customFolderId,
+			unreadOnly,
+			starredOnly,
+			hasAttachments,
 		} = params;
 
 		size = Number(size);
@@ -98,6 +101,9 @@ const emailService = {
 			endDate,
 			folderKey,
 			customFolderId,
+			unreadOnly,
+			starredOnly,
+			hasAttachments,
 		});
 		const countFilters = this.emailListFilters({
 			userId,
@@ -111,6 +117,9 @@ const emailService = {
 			endDate,
 			folderKey,
 			customFolderId,
+			unreadOnly,
+			starredOnly,
+			hasAttachments,
 		});
 		const columns = full ? emailListColumns : emailBriefColumns;
 
@@ -210,6 +219,9 @@ const emailService = {
 		endDate,
 		folderKey,
 		customFolderId,
+		unreadOnly,
+		starredOnly,
+		hasAttachments,
 	}) {
 		const conditions = [
 			eq(email.userId, userId),
@@ -249,6 +261,24 @@ const emailService = {
 		}
 		if (!allReceive) {
 			conditions.push(eq(email.accountId, accountId));
+		}
+		if (unreadOnly === 'true' || unreadOnly === true) {
+			conditions.push(eq(email.type, emailConst.type.RECEIVE), eq(email.unread, emailConst.unread.UNREAD));
+		}
+		if (starredOnly === 'true' || starredOnly === true) {
+			conditions.push(sql`EXISTS (
+				SELECT 1 FROM star
+				WHERE star.email_id = ${email.emailId}
+					AND star.user_id = ${userId}
+			)`);
+		}
+		if (hasAttachments === 'true' || hasAttachments === true) {
+			conditions.push(sql`EXISTS (
+				SELECT 1 FROM attachments
+				WHERE attachments.email_id = ${email.emailId}
+					AND attachments.user_id = ${userId}
+					AND attachments.type = ${attConst.type.ATT}
+			)`);
 		}
 		if (withCursor && emailId) {
 			conditions.push(timeSort ? gt(email.emailId, emailId) : lt(email.emailId, emailId));

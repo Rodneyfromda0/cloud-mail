@@ -3,9 +3,12 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <meta name="theme-color" content="#181614" id="theme-color-meta">
+  <meta name="theme-color" content="#050403" id="theme-color-meta">
   <meta name="description" content="XPass secure email for your team.">
   <title>XPass Mail</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap">
   <link rel="icon" href="/favicon.ico" sizes="any">
   <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32">
   <link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16">
@@ -22,15 +25,15 @@
       root.setAttribute('class', isDark ? 'dark' : '');
     }
     const metaTag = document.getElementById('theme-color-meta');
-    metaTag.setAttribute('content', isDark ? '#181614' : '#F1F1F1');
+    metaTag.setAttribute('content', isDark ? '#050403' : '#F1F1F1');
   </script>
 </head>
 <style>
   html {
-    background: #181614;
+    background: #050403;
   }
   .dark {
-    background: #181614;
+    background: #050403;
   }
   #loading-first {
     position: fixed;

@@ -24,6 +24,11 @@ watch(() => uiStore.dark, (dark) => {
   --el-color-primary-light-5: #ff9b6b;
   --el-color-primary-light-7: #ffbd9e;
   --el-color-primary-light-9: #fff1e8;
+  --xpass-shell: #050403;
+  --xpass-surface: #100e0c;
+  --xpass-raised: #18110d;
+  --xpass-border: rgba(194, 125, 79, .2);
+  --xpass-accent: #ff5500;
 }
 
 html,
@@ -34,5 +39,10 @@ body,
   min-height: 100%;
   overflow: hidden;
   background: var(--el-bg-color-page);
+}
+
+::selection {
+  background: rgba(255, 85, 0, .28);
+  color: var(--el-text-color-primary);
 }
 </style>
