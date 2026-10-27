@@ -181,6 +181,7 @@ button, input, select, textarea {
     --choose-account-background: rgba(255, 85, 0, 0.12);
     --email-scroll-content-color: #9297a0;
     --email-hover-background: #18110d;
+    --search-hit-background: #8a6a12;
     --email-right-click-background: var(--email-hover-background);
     --login-border: rgba(194, 125, 79, .2);
     --form-desc-color: #a5a9b0;

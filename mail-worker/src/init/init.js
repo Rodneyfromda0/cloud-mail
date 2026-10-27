@@ -117,6 +117,14 @@ const dbInit = {
 				}
 			}
 		}
+
+		try {
+			await c.env.db.prepare(`ALTER TABLE email ADD COLUMN sender_email TEXT NOT NULL DEFAULT '';`).run();
+		} catch (error) {
+			if (!error.message?.toLowerCase().includes('duplicate column')) {
+				throw error;
+			}
+		}
 	},
 
 	async v3_3DB(c) {

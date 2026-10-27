@@ -29,6 +29,7 @@
                  :mailbox-actions="mailboxActions"
                  :mailbox-action="applyMailboxAction"
                  :selected-email-id="emailStore.contentData.email?.emailId || 0"
+                 :highlight-text="emailStore.searchParams.text"
                  :show-unread="true"
                  actionLeft="4px"
                  @jump="jumpContent"

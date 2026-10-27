@@ -38,8 +38,18 @@ const routes = [
                 meta: {title: 'drafts', name: 'draft', menu: true}
             },
             {
-                path: '/messages',
+                path: '/:mailbox(inbox|starred|sent|all-mail)/messages',
                 name: 'content',
+                component: () => import('@/views/content/index.vue'),
+                meta: {
+                    title: 'message',
+                    name: 'content',
+                    menu: false
+                }
+            },
+            {
+                path: '/messages',
+                name: 'message-detail',
                 component: () => import('@/views/content/index.vue'),
                 meta: {
                     title: 'message',
