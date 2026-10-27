@@ -211,6 +211,9 @@
           <div class="signature-helper">{{ $t('signatureHelper') }}</div>
           <label>{{ $t('signatureTextLabel') }}</label>
           <el-input v-model="addForm.signatureText" type="textarea" :rows="3" maxlength="2000" show-word-limit />
+          <label>{{ $t('signatureHtmlLabel') }}</label>
+          <el-input v-model="addForm.signature" type="textarea" :rows="5" maxlength="10000" show-word-limit />
+          <div class="signature-helper">{{ $t('signatureHtmlHelper') }}</div>
         </div>
         <el-button class="btn" type="primary" @click="submit" :loading="addLoading"
         >{{ $t('add') }}
@@ -487,6 +490,7 @@ const addForm = reactive({
   type: null,
   signatureText: '',
   signatureImageData: '',
+  signature: '',
 })
 const signatureFileRef = ref()
 const signaturePreview = ref('')
@@ -734,6 +738,7 @@ function resetAddForm() {
   addForm.type = null
   addForm.signatureText = ''
   addForm.signatureImageData = ''
+  addForm.signature = ''
   signaturePreview.value = ''
 }
 

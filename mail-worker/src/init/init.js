@@ -35,8 +35,19 @@ const dbInit = {
 		await this.v3_4DB(c);
 		await this.v3_5DB(c);
 		await this.v3_6DB(c);
+		await this.v3_7DB(c);
 		await settingService.refresh(c);
 		return c.text('success');
+	},
+
+	async v3_7DB(c) {
+		try {
+			await c.env.db.prepare(`ALTER TABLE user ADD COLUMN signature TEXT NOT NULL DEFAULT '';`).run();
+		} catch (error) {
+			if (!error.message?.toLowerCase().includes('duplicate column')) {
+				throw error;
+			}
+		}
 	},
 
 	async v3_6DB(c) {
@@ -742,6 +753,7 @@ const dbInit = {
 			active_time DATETIME,
 			signature_image_key TEXT,
 			signature_text TEXT NOT NULL DEFAULT '',
+			signature TEXT NOT NULL DEFAULT '',
 			is_del INTEGER DEFAULT 0 NOT NULL
 		  )
 		`).run();

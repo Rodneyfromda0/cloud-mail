@@ -49,6 +49,7 @@ const userService = {
 		user.type = userRow.type;
 		user.signature_image_url = signatureService.imageUrl(c.req.url, userRow.signatureImageKey);
 		user.signature_text = userRow.signatureText || '';
+		user.signature = userRow.signature || '';
 
 		if (c.env.admin === userRow.email) {
 			user.role = constant.ADMIN_ROLE
@@ -79,6 +80,9 @@ const userService = {
 		const signatureText = params.signatureText === undefined
 			? userRow.signatureText || ''
 			: signatureService.normalizeText(params.signatureText);
+		const signature = params.signature === undefined
+			? userRow.signature || ''
+			: signatureService.normalizeHtml(params.signature);
 		const previousKey = userRow.signatureImageKey;
 		let signatureImageKey = previousKey;
 		let uploadedKey = null;
@@ -91,7 +95,7 @@ const userService = {
 		}
 
 		try {
-			await orm(c).update(user).set({ signatureImageKey, signatureText })
+			await orm(c).update(user).set({ signatureImageKey, signatureText, signature })
 				.where(eq(user.userId, userId)).run();
 		} catch (error) {
 			if (uploadedKey) {
@@ -218,6 +222,7 @@ const userService = {
 		for (const user of list) {
 			delete user.signatureImageKey;
 			delete user.signatureText;
+			delete user.signature;
 		}
 
 		const { total } = await orm(c)
@@ -369,6 +374,7 @@ const userService = {
 
 		let { email, type, password } = params;
 		const signatureText = signatureService.normalizeText(params.signatureText);
+		const signature = signatureService.normalizeHtml(params.signature);
 
 		if (!c.env.domain.includes(emailUtils.getDomain(email))) {
 			throw new BizError(t('notEmailDomain'));
@@ -402,7 +408,7 @@ const userService = {
 
 		const { salt, hash } = await saltHashUtils.hashPassword(password);
 
-		const userId = await userService.insert(c, { email, password: hash, salt, type, signatureText });
+		const userId = await userService.insert(c, { email, password: hash, salt, type, signatureText, signature });
 		let signatureImageKey = null;
 		try {
 			if (params.signatureImageData) {

@@ -18,6 +18,16 @@ function normalizeText(value) {
 	return value.trim();
 }
 
+function normalizeHtml(value) {
+	if (value == null) {
+		return '';
+	}
+	if (typeof value !== 'string' || value.length > 10000) {
+		throw new BizError('HTML signature must be 10,000 characters or fewer.');
+	}
+	return value.trim();
+}
+
 async function saveImage(c, userId, dataUrl) {
 	if (typeof dataUrl !== 'string' || dataUrl.length > Math.ceil(MAX_IMAGE_BYTES * 4 / 3) + 64) {
 		throw new BizError('Signature image must be 2 MB or smaller.');
@@ -82,4 +92,4 @@ function html(user, requestUrl) {
 	return `<div class="xpass-user-signature" style="margin-top: 20px; padding-top: 10px; border-top: 1px solid #e5e5e5; font-family: sans-serif;">${text}${image}</div>`;
 }
 
-export default { normalizeText, saveImage, deleteImage, imageUrl, html };
+export default { normalizeText, normalizeHtml, saveImage, deleteImage, imageUrl, html };

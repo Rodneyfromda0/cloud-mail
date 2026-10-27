@@ -139,6 +139,7 @@ import router from "@/router/index.js";
 import {ElMessageBox} from "element-plus";
 import {ElMessage} from "element-plus";
 import {mailboxTemplates, mailboxTemplateSave} from "@/request/mailbox.js";
+import {sanitizeSignatureHtml} from "@/utils/email-html.js";
 
 defineExpose({
   open,
@@ -164,6 +165,7 @@ const contactsTabRef = ref({})
 const showContacts = ref(false)
 const templates = ref([])
 const selectedTemplateId = ref(null)
+const quotedContent = ref('')
 const mySelect = ref()
 let selectStatus = false
 const backReply = reactive({
@@ -200,6 +202,54 @@ const sendButtonLabel = computed(() => {
 
 function selectSendMode(mode) {
   form.manyType = mode
+}
+
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, character => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  })[character])
+}
+
+function getComposeSignatureHtml() {
+  const signature = sanitizeSignatureHtml(userStore.user.signature || '')
+  if (signature) return signature
+
+  const account = accountStore.currentAccount || {}
+  const user = userStore.user || {}
+  const profile = account.signatureText || account.signatureImageUrl
+    ? account
+    : user
+  const text = profile.signatureText || profile.signature_text || ''
+  const imageUrl = profile.signatureImageUrl || profile.signature_image_url
+  if (!text && !imageUrl) return ''
+
+  const textHtml = text
+    ? `<div style="font-size: 14px; color: #333333; margin-bottom: 6px;">${escapeHtml(text).replace(/\r\n?|\n/g, '<br>')}</div>`
+    : ''
+  const imageHtml = imageUrl
+    ? `<img src="${escapeHtml(imageUrl)}" width="250" alt="Signature" style="max-width: 250px; height: auto; display: block; border: 0;" />`
+    : ''
+  return `<div class="xpass-user-signature" style="margin-top: 20px; padding-top: 10px; border-top: 1px solid #e5e5e5; font-family: sans-serif;">${textHtml}${imageHtml}</div>`
+}
+
+function composeWithSignature(bodyContent = '', quote = '') {
+  const signature = getComposeSignatureHtml()
+  let content = bodyContent || ''
+  if (signature) {
+    content += `${content ? '<br><br>' : '<div><br><br></div>'}${signature}`
+  }
+  if (quote) {
+    content += `${content ? '<br><br>' : ''}${quote}`
+  }
+  return content
+}
+
+function newDraftContent() {
+  return composeWithSignature()
 }
 
 function openContacts() {
@@ -269,7 +319,7 @@ async function applyTemplate(templateId) {
   }
   const substitute = value => value.replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (_match, key) => values[key] || '')
   form.subject = substitute(template.subject || '')
-  defValue.value = substitute(template.content || '')
+  defValue.value = composeWithSignature(substitute(template.content || ''), quotedContent.value)
   selectedTemplateId.value = null
 }
 
@@ -349,7 +399,7 @@ function clearContent() {
     cancelButtonText: t('cancel'),
     type: 'warning'
   }).then(() => {
-    resetForm()
+    resetForm(newDraftContent())
   })
 
 }
@@ -402,6 +452,8 @@ async function sendEmail() {
   }
 
   form.content = editor.value.getContent();
+  form.text = editor.value.getText();
+  const signatureIncluded = Boolean(getComposeSignatureHtml())
 
   if (!form.content) {
     ElMessage({
@@ -433,7 +485,7 @@ async function sendEmail() {
 
   show.value = false
 
-  emailSend(form, (e) => {
+  emailSend({...toRaw(form), signatureIncluded}, (e) => {
     percent.value = Math.round((e.loaded * 98) / e.total)
   }).then(result => {
     const emailList = Array.isArray(result) ? result : result.emails
@@ -502,22 +554,24 @@ function addRecipientRecord() {
   writerStore.sendRecipientRecord = writerStore.sendRecipientRecord.slice(0, 500);
 }
 
-function resetForm() {
+function resetForm(initialContent = '') {
   form.receiveEmail = []
   form.subject = ''
   form.content = ''
+  form.text = ''
   form.manyType = 'together'
   form.attachments = []
   form.sendType = ''
   form.emailId = 0
   form.draftId = null
-  defValue.value = ''
+  defValue.value = initialContent
   selectedTemplateId.value = null
+  quotedContent.value = ''
   backReply.content = ''
   backReply.subject = ''
   backReply.receiveEmail = []
   backReply.sendType = ''
-  editor.value.clearEditor()
+  editor.value.setContent(initialContent)
 }
 
 function change(content, text) {
@@ -537,12 +591,11 @@ function openForward(email) {
   form.subject = email.subject
   form.sendType = 'forward'
 
-  defValue.value = ''
-
   setTimeout(() => {
-    defValue.value = `
+    quotedContent.value = `
       ${formatImage(email.content) || `<pre style="font-family: inherit;word-break: break-word;white-space: pre-wrap;margin: 0">${email.text}</pre>`}
     `
+    defValue.value = composeWithSignature('', quotedContent.value)
     open()
 
     nextTick(() => {
@@ -570,20 +623,18 @@ function openReply(email) {
   form.sendType = 'reply'
   form.emailId = email.emailId
 
-  defValue.value = ''
-
   setTimeout(() => {
-    defValue.value = `
-    <div></div>
+    quotedContent.value = `
     <div>
     <br>
         ${formatDetailDate(email.createTime)} ${email.name} &lt${email.sendEmail}&gt ${t('wrote')}:
     </div>
     <blockquote class="mceNonEditable" style="margin: 0 0 0 0.8ex;border-left: 1px solid rgb(204,204,204);padding-left: 1ex;">
-      <articl>
+      <article>
           ${formatImage(email.content) || `<pre style="font-family: inherit;word-break: break-word;white-space: pre-wrap;margin: 0">${email.text}</pre>`}
       </article>
     </blockquote>`
+    defValue.value = composeWithSignature('', quotedContent.value)
     open()
 
     nextTick(() => {
@@ -603,6 +654,9 @@ function formatImage(content) {
 }
 
 function open() {
+  if (!form.sendType) {
+    resetForm(newDraftContent())
+  }
   mailboxTemplates()
     .then(templateRows => templates.value = templateRows)
     .catch(error => console.error(error))
@@ -621,8 +675,15 @@ function open() {
 
 function openDraft(draft) {
   Object.assign(form, {...draft, manyType: draft.manyType || 'together'})
+  quotedContent.value = ''
+  if (!form.content) {
+    form.content = newDraftContent()
+  }
   defValue.value = ''
-  setTimeout(() => defValue.value = form.content)
+  setTimeout(() => {
+    defValue.value = form.content
+    editor.value.setContent(form.content)
+  })
   show.value = true;
   editor.value.focus()
 }

@@ -416,7 +416,8 @@ const emailService = {
 			text, //邮件纯文本
 			content, //邮件内容
 			subject, //邮件标题
-			attachments = [] //附件
+			attachments = [], //附件
+			signatureIncluded = false
 		} = params;
 
 		const { resendTokens, r2Domain, send, domainList } = await settingService.query(c);
@@ -436,9 +437,12 @@ const emailService = {
 		}
 
 		const signatureProfile = accountRow.signatureText || accountRow.signatureImageKey ? accountRow : userRow;
-		content = `${content || ''}${signatureService.html(signatureProfile, c.req.url)}`;
-		if (signatureProfile.signatureText) {
-			text = `${text || ''}\n\n${signatureProfile.signatureText}`;
+		const signatureHtml = userRow.signature || signatureService.html(signatureProfile, c.req.url);
+		if (signatureIncluded !== true) {
+			content = `${content || ''}${signatureHtml}`;
+			if (!userRow.signature && signatureProfile.signatureText) {
+				text = `${text || ''}\n\n${signatureProfile.signatureText}`;
+			}
 		}
 		let { imageDataList, html } = await attService.toImageUrlHtml(c, content);
 		const roleRow = await roleService.selectById(c, userRow.type);

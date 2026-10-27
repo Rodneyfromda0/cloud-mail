@@ -51,6 +51,9 @@
         <div class="signature-helper">{{ $t('signatureHelper') }}</div>
         <label>{{ $t('signatureTextLabel') }}</label>
         <el-input v-model="signatureText" type="textarea" :rows="3" maxlength="2000" show-word-limit />
+        <label>{{ $t('signatureHtmlLabel') }}</label>
+        <el-input v-model="signature" type="textarea" :rows="5" maxlength="10000" show-word-limit />
+        <div class="signature-helper">{{ $t('signatureHtmlHelper') }}</div>
         <el-button class="signature-save" type="primary" :loading="signatureSaving" @click="saveSignature">
           {{ $t('saveSignature') }}
         </el-button>
@@ -109,6 +112,7 @@ const setPwdLoading = ref(false)
 const setNameShow = ref(false)
 const accountName = ref(null)
 const signatureText = ref('')
+const signature = ref(userStore.user.signature || '')
 const signaturePreview = ref('')
 const signatureImageData = ref('')
 const removeSignatureImage = ref(false)
@@ -161,6 +165,7 @@ async function saveSignature() {
   signatureSaving.value = true
   const params = {
     signatureText: signatureText.value,
+    signature: signature.value,
     removeSignatureImage: removeSignatureImage.value,
   }
   if (signatureImageData.value) {
@@ -170,6 +175,7 @@ async function saveSignature() {
     const user = await updateSignature(params)
     userStore.user = user
     signatureText.value = user.signature_text || ''
+    signature.value = user.signature || ''
     signaturePreview.value = user.signature_image_url || ''
     signatureImageData.value = ''
     removeSignatureImage.value = false

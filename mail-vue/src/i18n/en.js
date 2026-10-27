@@ -36,6 +36,8 @@ const en = {
     emailSignature: 'Email signature',
     signaturePictureOptional: 'Email signature picture (optional)',
     signatureTextLabel: 'Signature title / text',
+    signatureHtmlLabel: 'HTML signature',
+    signatureHtmlHelper: 'HTML formatting, inline styles, tables, and image URLs are supported.',
     signatureHelper: 'Recommended size: 300x100px (Max 2MB). Fits all mobile & desktop devices.',
     chooseImage: 'Choose image',
     removeImage: 'Remove image',
